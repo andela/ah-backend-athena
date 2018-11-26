@@ -87,6 +87,7 @@ if 'TRAVIS' in os.environ:
         'PASSWORD':'',
         'HOST':'localhost',
         'PORT': '',
+        
     }
 }
 
