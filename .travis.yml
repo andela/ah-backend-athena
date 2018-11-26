@@ -1,0 +1,21 @@
+language: python
+python:
+  - 3.7
+
+services: postgresql
+
+env:
+  - DJANGO=2.1.3
+
+install:
+  - pip install r requirements.txt
+  - pip install coveralls
+
+before_script:
+  - psql -c "CREATE DATABASE athena-travisdb;" -U athena
+
+script:
+  - python manage.py migrate
+
+after_success:
+  - coveralls

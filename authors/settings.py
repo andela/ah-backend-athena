@@ -78,6 +78,18 @@ WSGI_APPLICATION = 'authors.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
+if 'TRAVIS' in os.environ:
+    DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'traviscidb',
+        'USER': 'athena',
+        'PASSWORD':'',
+        'HOST':'localhost',
+        'PORT': '',
+    }
+}
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
