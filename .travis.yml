@@ -11,12 +11,16 @@ env:
 install:
   - pip install r requirements.txt
   - pip install coveralls
+  - pip install coverage
 
 before_script:
-  - psql -c "CREATE DATABASE athena-travisdb;" -U athena
+  - psql -c "CREATE DATABASE traviscidb;" -U postgres
+  - python manage.py makemigrations
+  - python manage.py migrate
 
 script:
-  - python manage.py migrate
+  - coverage run --source='.' ./manage.py test 
+  - coverage report
 
 after_success:
   - coveralls
