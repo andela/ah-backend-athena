@@ -14,7 +14,7 @@ install:
   - pip install coverage
 
 before_script:
-  - psql -c "CREATE DATABASE athena-traviscidb;" -U postgres
+  - psql -c "CREATE DATABASE athenatraviscidb;" -U postgres
   - python manage.py makemigrations
   - python manage.py migrate
 
