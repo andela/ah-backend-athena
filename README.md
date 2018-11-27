@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/andela/ah-backend-athena.svg?branch=develop)](https://travis-ci.org/andela/ah-backend-athena)
+[![Build Status](https://travis-ci.org/andela/ah-backend-athena.svg?branch=ch-travis-readme-badge-162163256)](https://travis-ci.org/andela/ah-backend-athena)
+
 Authors Haven - A Social platform for the creative at heart.
 =======
 
