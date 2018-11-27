@@ -1,7 +1,7 @@
 language: python
 
 python:
-  - 3.7
+  - 3.7.1
 
 services: postgresql
 
@@ -14,7 +14,7 @@ install:
   - pip install coverage
 
 before_script:
-  - psql -c "CREATE DATABASE traviscidb;" -U postgres
+  - psql -c "CREATE DATABASE athena-traviscidb;" -U postgres
   - python manage.py makemigrations
   - python manage.py migrate
 
