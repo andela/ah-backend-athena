@@ -78,18 +78,6 @@ WSGI_APPLICATION = 'authors.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-if 'TRAVIS' in os.environ:
-    DATABASES = {
-    'default': {
-        'ENGINE': os.environ.get('ENGINE',''),
-        'NAME': os.environ.get('NAME',''),
-        'USER': os.environ.get('USER',''),
-        'PASSWORD':os.environ.get('PASSWORD',''),
-        'HOST':os.environ.get('HOST',''),
-        'PORT': os.environ.get('PORT',''),
-    }
-}
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
