@@ -1,0 +1,23 @@
+{
+    "name": "ah-backend-athena",
+    "description": "Backend of a social platform for the creative at heart",
+    "repository": "https://github.com/andela/ah-backend-athena",
+    "keywords": ["python", "django", "authors", "haven", "social", "api"],
+    "env": {
+      "SECRET_KEY": {
+        "description": "A secret key for verifying the integrity of signed JWT.",
+        "generator": "secret"
+      }
+    },
+    "addons": [
+      "heroku-postgresql"
+    ],
+    "scripts": {
+      "postdeploy": "python manage.py migrate --noinput"
+    },
+    "buildpacks":[
+        {
+            "url": "heroku/python"
+        }
+    ]
+  }
