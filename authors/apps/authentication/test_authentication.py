@@ -6,7 +6,9 @@ from .models import UserManager
 
 
 class TestUsers(APITestCase):
-    client = APIClient()
+
+    def setUp(self):
+        self.client = APIClient()
 
     def generate_user(self, username='', email='',password=''):
         user = {
@@ -18,15 +20,18 @@ class TestUsers(APITestCase):
         }
         return user
     def create_user(self, username='', email='',password=''):
-          user = self.generate_user(username, email,password)
-          self.client.post('/api/users/', user, format='json')
-          return user
+        user = self.generate_user(username, email,password)
+        self.client.post('/api/users/', user, format='json')
+        return user
 
     def test_user_registration(self):
         user = self.generate_user('athena', 'athena@gmail.com', 'password@user')
         response = self.client.post('/api/users/', user, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json.loads(response.content), {"user": {"email": "athena@gmail.com", "username": "athena"}})
+        self.assertEqual(
+                json.loads(response.content),
+                {"user": {"email": "athena@gmail.com", "username": "athena"}}
+            )
     
 
     def test_user_registration_empty_details(self):
@@ -44,5 +49,8 @@ class TestUsers(APITestCase):
         login_details= self.generate_user('','athena@gmail.com', 'password@user')
         response = self.client.post('/api/users/login/',login_details, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json.loads(response.content), {"user": {"email": "athena@gmail.com", "username": "athena"}})
+        self.assertEqual(
+            json.loads(response.content),
+            {"user": {"email": "athena@gmail.com", "username": "athena"}}
+        )
     
