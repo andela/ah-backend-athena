@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 import os
 from dotenv import load_dotenv
+import django_heroku
 
 load_dotenv()
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -25,7 +26,7 @@ SECRET_KEY = '7pgozr2jn7zs_o%i8id6=rddie!*0f0qy3$oy$(8231i^4*@u3'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.herokuapp.com']
+ALLOWED_HOSTS = ['.herokuapp.com', '127.0.0.1']
 
 # Application definition
 
@@ -149,3 +150,6 @@ REST_FRAMEWORK = {
         'authors.apps.authentication.backends.JWTAuthentication',
     ),
 }
+
+# Activate Django-Heroku; must be at the very bottom
+django_heroku.settings(locals())
