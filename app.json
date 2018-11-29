@@ -4,9 +4,31 @@
     "repository": "https://github.com/andela/ah-backend-athena",
     "keywords": ["python", "django", "authors", "haven", "social", "api"],
     "env": {
+      "DB_NAME": {
+        "required": true
+      },
+      "DB_PASSWORD": {
+        "required": true
+      },
+      "DB_USER": {
+        "required": true
+      },
+      "DISABLE_COLLECTSTATIC": {
+        "required": true
+      },
+      "HOST": {
+        "required": true
+      },
+      "PORT": {
+        "required": true
+      },
       "SECRET_KEY": {
-        "description": "A secret key for verifying the integrity of signed JWT.",
-        "generator": "secret"
+        "required": true
+      }
+    },
+    "formation": {
+      "web": {
+        "quantity": 1
       }
     },
     "addons": [
