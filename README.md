@@ -1,4 +1,5 @@
 [![Coverage Status](https://coveralls.io/repos/github/andela/ah-backend-athena/badge.svg?branch=ch-coveralls-integration-162163259)](https://coveralls.io/github/andela/ah-backend-athena?branch=ch-coveralls-integration-162163259)
+[![Build Status](https://travis-ci.org/andela/ah-backend-athena.svg?branch=ch-travis-readme-badge-162163256)](https://travis-ci.org/andela/ah-backend-athena)
 
 Authors Haven - A Social platform for the creative at heart.
 =======
