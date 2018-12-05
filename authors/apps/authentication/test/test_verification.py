@@ -57,10 +57,11 @@ class VerificationTestCase(APITestCase):
     def test_generate_activation_link_function(self):
         user = User.objects.get()
         request = self.request
-        token, uid = RegistrationAPIView.generate_activation_link(user, request, send=False)
-        self.assertFalse(token==None)
-        self.assertFalse(uid==None)
-        self.assertFalse(len(mail.outbox)==2)
+        token, uid = RegistrationAPIView.generate_activation_link(
+            user, request, send=False)
+        self.assertFalse(token == None)
+        self.assertFalse(uid == None)
+        self.assertFalse(len(mail.outbox) == 2)
 
     def test_send_activation_link(self):
         with patch('authors.apps.authentication.views.send_mail') as mock_mail:
@@ -78,17 +79,20 @@ class VerificationTestCase(APITestCase):
                 subject="Author's Heaven account email verification",
                 from_email="athenad0a@gmail.com",
                 recipient_list=['shadik.ntale@andela.com'],
-                message="Please follow the following link to activate your account \n https://testserver/api/activate/{}/{}/".format(token, uid),
+                message="Please follow the following link to activate your account \n https://testserver/api/activate/{}/{}/".format(
+                    token, uid),
                 fail_silently=False)
-    
+
     def test_invalid_verification_link(self):
         request = self.request
 
         user = User.objects.get()
-        token, uid = RegistrationAPIView.generate_activation_link(user, request, send=False)
+        token, uid = RegistrationAPIView.generate_activation_link(
+            user, request, send=False)
 
         # create the uid from a different username
-        uid = urlsafe_base64_encode(force_bytes("invalid_username")).decode("utf-8")
+        uid = urlsafe_base64_encode(force_bytes(
+            "invalid_username")).decode("utf-8")
 
         response = self.verify_account(token, uid)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -15,7 +15,7 @@ class TestProfileCreate(APITestCase):
             'user': {
                 'email': "soko@gmail.com",
                 'username': "soko",
-                'password': 'sokosoko'
+                'password': 'Sokosok1!'
             }
         }
     def verify_account(self, token, uidb64):
@@ -44,16 +44,20 @@ class TestProfileCreate(APITestCase):
         return token
 
     def test_get_profile(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         response = self.client.get('/api/profiles/soko')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             json.loads(response.content)['profile']['username'],
             "soko"
         )
 
     def test_get_non_existing_profile(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         response = self.client.get('/api/profiles/sokop')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             json.loads(response.content)['profile']['detail'],
             "Profile does not exist."
@@ -61,22 +65,20 @@ class TestProfileCreate(APITestCase):
 
     def test_update_profile(self):
         data = {
-                "user":{
-                    "email": "kool@andela.com",
-                    "bio": "I love andela",
-                    "image": "http://andela.com/paul.jpg"
-                }
-                }
+            "user": {
+                "email": "kool@andela.com",
+                "bio": "I love andela",
+                "image": "http://andela.com/paul.jpg"
+            }
+        }
 
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         self.client.put(
             '/api/user/', data, format='json')
         response = self.client.get('/api/profiles/soko')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             json.loads(response.content)['profile']['bio'],
             "I love andela"
         )
-
-
-   
-
