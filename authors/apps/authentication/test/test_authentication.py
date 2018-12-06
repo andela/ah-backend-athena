@@ -2,7 +2,7 @@ import json
 from django.urls import reverse
 from rest_framework.views import status
 from rest_framework.test import APITestCase, APIClient
-from .models import UserManager
+from ..models import UserManager
 
 
 class TestUsers(APITestCase):

@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from .models import User
 
@@ -143,3 +144,45 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    """ 
+    serializer for requesting a password reset via email 
+    """
+
+    email = serializers.EmailField(max_length=255)
+
+    def validate_email(self, email):
+        """
+        check if the email entered has a corresponding user
+        """
+        user = User.objects.filter(email=email).first()
+        
+        if not user:
+            raise serializers.ValidationError(
+                'User with this email is not found'
+            )
+        return email
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    serializer for requesting a new password
+    """
+    password = serializers.CharField(
+        max_length=128,
+        min_length=8
+    )
+    confirm_password = serializers.CharField(
+        max_length=128,
+        min_length=8
+    )
+
+    # def validate_password(self, password, confirm_password):
+    #     if password != confirm_password:
+    #         raise serializers.ValidationError(
+    #             'The passwords do not match'
+    #         )
+    #     return confirm_password
+
