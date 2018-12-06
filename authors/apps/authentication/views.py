@@ -40,6 +40,7 @@ class GoogleAuthAPIView(GenericAPIView):
 
     def post(self, request):
         token = request.data.get('token', {})
+        print("######################## TOKEN from request: ", token)
         serializer = self.serializer_class(data={'auth_token': token})
         serializer.is_valid(raise_exception=True)
         # serializer.save()

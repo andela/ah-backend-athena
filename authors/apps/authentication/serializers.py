@@ -160,10 +160,10 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
     Validate auth_token, decode the auth_token, retrieve user info
     """
     def validate_auth_token(self, auth_token):
-        print("################# AUTH TOKEN: ", auth_token)
+        # print("################# AUTH TOKEN: ", auth_token)
 
         response = GoogleSocialAuth.validate_google_token(auth_token)
-        print("############## RESPONSE: ", response)
+        # print("############## RESPONSE: ", response)
 
         if response is None:
             # return error message to user
@@ -182,7 +182,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
             #create the user and log them in
             user_obj = {
                 'social_id': response['sub'],
-                'username': response['name'],
+                'username': response.get('name', response['email']),
                 'email': response['email'],
                 # TODO: replace hardcoded password value with random generated value
                 'password': 'Password@AAA'
