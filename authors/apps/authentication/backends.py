@@ -20,10 +20,14 @@ class JWTAuthentication:
         Otherwise it returns the token.
         """
         header = authentication.get_authorization_header(request)
-        if header:
+        token = None
+        try:
             token = header.split()[1].decode('utf-8')
+        except:
+            raise exceptions.AuthenticationFailed(
+                'Token not found in the header')
+        finally:
             return token
-        return None
 
     def authenticate(self, request):
         """
@@ -36,16 +40,19 @@ class JWTAuthentication:
         if not user_token:
             return None
         try:
-            payload = jwt.decode(user_token, settings.SECRET_KEY)
-        except jwt.InvalidTokenError:
-            invalid_error = 'Invalid token. please login again'
-            raise exceptions.AuthenticationFailed(invalid_error)
-        except jwt.ExpiredSignatureError:
-            expired_error = 'Token expired. Please log in again.'
-            raise exceptions.AuthenticationFailed(expired_error)
-        try:
-            user = User.objects.get(id=payload['id'])
-        except (User.DoesNotExist, User.PasswordDoesNotMacth):
-            error = 'Invalid user credentials'
-            raise exceptions.AuthenticationFailed(error)
+            payload_id = self.decode_token(user_token)
+            user = User.objects.get(id=payload_id)
+        except (User.DoesNotExist):
+            raise exceptions.AuthenticationFailed('Invalid user credentials')
         return (user, user_token)
+
+    def decode_token(self, user_token):
+        try:
+            payload = jwt.decode(user_token, settings.SECRET_KEY)
+            return payload['id']
+        except jwt.InvalidTokenError:
+            raise exceptions.AuthenticationFailed(
+                'Invalid token. please login again')
+        except jwt.ExpiredSignatureError:
+            raise exceptions.AuthenticationFailed(
+                'Token expired. Please log in again.')
