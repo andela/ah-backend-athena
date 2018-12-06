@@ -144,42 +144,80 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
-class SocialAuthSerializer(serializers.ModelSerializer):
-    email = serializers.CharField(max_length=255)
-    username = serializers.CharField(max_length=255, read_only=True)
-    social_id = serializers.CharField(max_length=128, write_only=True)
-    token = serializers.CharField(max_length=255, read_only=True)
+class GoogleAuthSerializer(serializers.ModelSerializer):
+    # email = serializers.CharField(max_length=255, read_only=True)
+    # username = serializers.CharField(max_length=255, read_only=True)
+    # social_id = serializers.CharField(max_length=128, read_only=True)
+    # auth_token = serializers.CharField(read_only=True)
+    auth_token = serializers.CharField()
 
     class Meta:
-        fields = ['email', 'username', 'token', 'social_id']
+        model = User
+        # fields = ['email', 'username', 'auth_token']
+        fields = ['auth_token']
 
     """
-    Validate token, decode the token, retrieve user info
+    Validate auth_token, decode the auth_token, retrieve user info
     """
+    def validate_auth_token(self, auth_token):
+        print("################# AUTH TOKEN: ", auth_token)
 
-    response = GoogleSocialAuth.validate_google_token(token)
+        response = GoogleSocialAuth.validate_google_token(auth_token)
+        print("############## RESPONSE: ", response)
 
-    if 'error' in response:
-        # return error message to user
-        raise serializers.ValidationError(
-            response['error']
-        )
+        if response is None:
+            # return error message to user
+            raise serializers.ValidationError(
+                'Invalid token please try again'
+            )
 
-    if 'google_user_info' in response:
-        # check if user in db
-        #if yes, don't duplicate. create jwt token
-        #if no, add user to db, and create token
-        user = User.objects.all(social_id=response['google_user_info']['social_id'])
-        
-        if user:
-            return {
-            'email': user.email,
-            'username': user.username,
-            'token': user.token
+        if not response['sub']:  # doesn't have social_id
+            raise serializers.ValidationError(
+                'Token is not valid please log in again'
+            )
+
+        user = User.objects.filter(social_id=response['sub'])
+        print("##########################  USER SEARCH: ", user)
+        if not user.exists():
+            #create the user and log them in
+            user_obj = {
+                'social_id': response['sub'],
+                'username': response['name'],
+                'email': response['email'],
+                # TODO: replace hardcoded password value with random generated value
+                'password': 'Password@AAA'
             }
-        if not user:
-            self.create(validated_data)
 
-    def create(self, validated_data):
-        # Use the `create_user` method we wrote earlier to create a new user.
-        return User.objects.create_user(**validated_data)
+            try:
+                #try to create user
+                User.objects.create_user(**user_obj)
+            except:
+                #some error occured, probably duplicate email
+                raise serializers.ValidationError(
+                    'Failed to register the user. Email already exists in the database')
+
+            #TODO: we could instead update the created user with the social_id
+            # User.objects.filter(email=response['email']).update(social_id=response['sub'])
+
+            # email_param = user_obj['email']
+            # password_param = user_obj['password']
+            # authenticated_user = authenticate(email=email_param, password=password_param)
+
+            authenticated_user = User.objects.get(social_id=response['sub'])
+        else:
+            # authenticated_user = User.objects.get(social_id=response['sub'])
+            authenticated_user = User.objects.filter(social_id=response['sub'])[0]
+            print("############## AUTHENTICATED_USER", authenticated_user.email)
+            print("############## AUTHENTICATED_USER", authenticated_user.username)
+            #user exists, log them in
+            # email_param = response['email']
+            # password_param = response['password']
+
+        
+        # return {
+        #     'email': authenticated_user.email,
+        #     'username': authenticated_user.username,
+        #     'auth_token': authenticated_user.token()
+        # }
+        return authenticated_user.token()
+     

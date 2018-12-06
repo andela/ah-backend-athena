@@ -17,7 +17,9 @@ class UserManager(BaseUserManager):
     to create `User` objects.
     """
 
-    def create_user(self, username, email, password=None):
+    # def create_user(self, username, email, password=None):
+    #TODO: might have to remove social_id param so tests in create_user don't fail
+    def create_user(self, username, email, password=None, social_id=None):
         """Create and return a `User` with an email, username and password."""
         if username is None:
             raise TypeError('Users must have a username.')
@@ -25,7 +27,7 @@ class UserManager(BaseUserManager):
         if email is None:
             raise TypeError('Users must have an email address.')
 
-        user = self.model(username=username, email=self.normalize_email(email))
+        user = self.model(username=username, email=self.normalize_email(email), social_id=social_id)
         user.set_password(password)
         user.save()
 
@@ -72,7 +74,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     Social id field to identify social users
     """
-    social_id = models.CharField(db_index=True, unique=True)
+    social_id = models.CharField(db_index=True, null=True, max_length=255)
 
     # The `is_staff` flag is expected by Django to determine who can and cannot
     # log into the Django admin site. For most users, this flag will always be
@@ -98,11 +100,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         """
-        Returns a string representation of this `User`.
+            Returns a string representation of this `User`.
 
-        This string is used when a `User` is printed in the console.
+            This string is used when a `User` is printed in the console.
         """
         return self.email
+
 
     @property
     def get_full_name(self):
@@ -131,6 +134,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             'id': self.pk,
             'name': self.get_short_name(),
             'exp': expire_date,
-            }, settings.SECRET_KEY, algorithm="HS256"
-            )
+        }, settings.SECRET_KEY, algorithm="HS256"
+        )
         return token.decode('utf-8')

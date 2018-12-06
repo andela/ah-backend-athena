@@ -37,15 +37,15 @@ class JWTAuthentication:
             return None
         try:
             payload = jwt.decode(user_token, settings.SECRET_KEY)
-        except jwt.InvalidTokenError:
-            invalid_error = 'Invalid token. please login again'
-            raise exceptions.AuthenticationFailed(invalid_error)
         except jwt.ExpiredSignatureError:
             expired_error = 'Token expired. Please log in again.'
             raise exceptions.AuthenticationFailed(expired_error)
+        except jwt.InvalidTokenError:
+            invalid_error = 'Invalid token. please login again'
+            raise exceptions.AuthenticationFailed(invalid_error)
         try:
             user = User.objects.get(id=payload['id'])
-        except (User.DoesNotExist, User.PasswordDoesNotMacth):
+        except (user.DoesNotExist, user.PasswordDoesNotMacth):
             error = 'Invalid user credentials'
             raise exceptions.AuthenticationFailed(error)
         return (user, user_token)

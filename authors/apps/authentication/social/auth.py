@@ -18,14 +18,15 @@ class GoogleSocialAuth:
             request is what id_token will use to ping google so it can verify the token
             audience/CLIENT ID is the app on google that this token is intended for
         """
-        res = {}
-
-        try:
-           google_user_info = id_token.verify_oauth2_token(auth_token, requests.Request(), os.getenv('GOOGLE_CLIENT_ID'))
-           res['google_user_info'] = google_user_info
-        except ValueError:
-            """auth_token is invalid"""
-            res['error'] = "The token is invalid or has expired"
         
-        return res
+        try:
+            google_user_info = id_token.verify_oauth2_token(auth_token, requests.Request(), "341988301600-odl0nb10vaim96gsdhpa6vun7iog5pl0.apps.googleusercontent.com")
+            # google_user_info = id_token.verify_oauth2_token(auth_token, requests.Request(), os.getenv('GOOGLE_CLIENT_ID'))
+            google_user = google_user_info
+            print("######### GOOGLE_USER: ", google_user)
+            print("####################### SUB value: ", google_user['sub'])
+
+        except ValueError:
+            google_user=None
+        return google_user
     

@@ -1,5 +1,9 @@
+import json
 from .serializers import (
-    LoginSerializer, RegistrationSerializer, UserSerializer
+    LoginSerializer,
+    RegistrationSerializer,
+    UserSerializer,
+    GoogleAuthSerializer
 )
 from .renderers import UserJSONRenderer
 from rest_framework import status
@@ -27,6 +31,20 @@ class RegistrationAPIView(GenericAPIView):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class GoogleAuthAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = GoogleAuthSerializer
+
+    def post(self, request):
+        token = request.data.get('token', {})
+        serializer = self.serializer_class(data={'auth_token': token})
+        serializer.is_valid(raise_exception=True)
+        # serializer.save()
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class LoginAPIView(GenericAPIView):

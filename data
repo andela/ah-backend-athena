@@ -1,3 +1,28 @@
+{'iss': 'accounts.google.com', 'azp': '341988301600-odl0nb10vaim96gsdhpa6vun7iog5pl0.apps.googleusercontent.com', 'aud': '341988301600-odl0nb10vaim96gsdhpa6vun7iog5pl0.apps.googleusercontent.com', 'sub': '107845313892782160368', 'email': 'arkafuuma@gmail.com', 'email_verified': True, 'at_hash': 'EAqy3fbdA0GnhBNHWTi9rQ', 'name': 'kafuuma henry', 'picture': 'https://lh4.googleusercontent.com/-hmwSN4Qdwco/AAAAAAAAAAI/AAAAAAAAASg/vKYMIZz5DeY/s96-c/photo.jpg', 'given_name': 'kafuuma', 'family_name': 'henry', 'locale': 'en', 'iat': 1544114381, 'exp': 1544117981, 'jti': '0e4d03646f6292a96b9281862ff59795d29f2cc7'}
+Bad Request: /api/users/google/
+
+
+
+
+
+
+export DB_NAME='heaven_testing'
+export DB_USER='postgres'
+export DB_PASSWORD='password'
+export HOST='127.0.0.1'
+export SECRET_KEY='7pgozr2jn7zs_o%i8id6=rddie!*0f0qy3$oy$(8231i^4*@u3'
+
+#josh client ID
+# export GOOGLE_CLIENT_ID='341988301600-odl0nb10vaim96gsdhpa6vun7iog5pl0.apps.googleusercontent.com'
+
+#athena client ID
+export GOOGLE_CLIENT_ID='399794902926-o2j33g8hv0gq1ceq55jq043adhgcucst.apps.googleusercontent.com'
+export GOOGLE_SECRET_ID='yv6_4HM1bfpusdU2A_BnZiFG'
+DEBUG=True
+
+
+
+
 """
 Django settings for authors project.
 
