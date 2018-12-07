@@ -5,7 +5,7 @@ import json
 
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .serializers import ProfileSerializer
 from .models import Profile
@@ -13,7 +13,7 @@ from .renderers import ProfileJSONRenderer
 
 
 class ProfileRetrieveView(RetrieveAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = ProfileSerializer
     renderer_classes = (ProfileJSONRenderer,)
 
