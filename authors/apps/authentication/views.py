@@ -8,7 +8,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
-from .renderers import UserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer
 )
@@ -19,12 +18,12 @@ from django.utils.http import (
     urlsafe_base64_decode, urlsafe_base64_encode, force_bytes,
 )
 from django.contrib.auth.hashers import make_password
-from .renderers import UserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer,
     PasswordResetSerializer, PasswordResetConfirmSerializer
 )
 from django.contrib.sites.shortcuts import get_current_site
+from authors.apps.profiles.models import Profile
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -84,13 +83,23 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         serializer_data = request.data.get('user', {})
 
-        # Here is that serialize, validate, save pattern we talked about
-        # before.
+
         serializer = self.serializer_class(
             request.user, data=serializer_data, partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        
+        bio = serializer_data.get('bio', request.user.profile.bio)
+        image = serializer_data.get('image', request.user.profile.image)
+
+        #gets loggedin user id and gets profile object of the user and updates profile
+        user_id = User.objects.all().filter(email=request.user).values()[0]['id']
+        profile = Profile.objects.get(user__id=user_id)
+        profile.bio = bio
+        profile.image = image
+        profile.save()
+        print(profile.bio)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
