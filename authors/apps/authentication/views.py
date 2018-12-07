@@ -11,7 +11,7 @@ from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer
 )
-
+from authors.apps.profiles.models import Profile
 from .models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import (
