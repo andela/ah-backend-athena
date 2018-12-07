@@ -31,7 +31,7 @@ class ProfileRetrieveView(RetrieveAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def update(self, request, *args, **kwargs):
-        serializer_data = request.data.get('mm', {})
+        serializer_data = request.data.get('data', {})
         serializer = self.serializer_class(
             request.data, data=serializer_data, partial=True
         )
