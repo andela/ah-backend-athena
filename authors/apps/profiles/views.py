@@ -8,11 +8,14 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .serializers import ProfileSerializer
-from .models import Profile 
+from .models import Profile
+from .renderers import ProfileJSONRenderer
+
 
 class ProfileRetrieveView(RetrieveAPIView):
     permission_classes = (AllowAny,)
     serializer_class = ProfileSerializer
+    renderer_classes = (ProfileJSONRenderer,)
 
     def retrieve(self, request, *args, **kwargs):
         username = self.kwargs['slug']
