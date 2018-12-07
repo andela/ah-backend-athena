@@ -17,7 +17,7 @@ class UserManager(BaseUserManager):
     to create `User` objects.
     """
 
-    def create_user(self, username, email, password=None):
+    def create_user(self, username, email, password=None, social_id=None):
         """Create and return a `User` with an email, username and password."""
         if username is None:
             raise TypeError('Users must have a username.')
@@ -25,7 +25,7 @@ class UserManager(BaseUserManager):
         if email is None:
             raise TypeError('Users must have an email address.')
 
-        user = self.model(username=username, email=self.normalize_email(email))
+        user = self.model(username=username, email=self.normalize_email(email), social_id=social_id)
         user.set_password(password)
         user.save()
 
@@ -60,6 +60,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     # the user anyways, we will also use the email for logging in because it is
     # the most common form of login credential at the time of writing.
     email = models.EmailField(db_index=True, unique=True)
+
+    """
+    social_id is a colum with unique values that are sent with the decode social user data
+    """
+    social_id = models.CharField(db_index=True, null=True, max_length=255)
 
     # When a user no longer wishes to use our platform, they may try to delete
     # there account. That's a problem for us because the data we collect is
