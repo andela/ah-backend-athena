@@ -32,6 +32,24 @@ class TestProfileCreate(APITestCase):
             "soko"
         )
 
+    def test_update_profile(self):
+        data = {
+                "user":{
+                    "email": "kool@andela.com",
+                    "bio": "I love andela",
+                    "image": "http://andela.com/paul.jpg"
+                }
+                }
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        self.client.put(
+            '/api/user/', data, format='json')
+        response = self.client.get('/api/profiles/soko')
+        self.assertEqual(
+            json.loads(response.content)['profile']['bio'],
+            "I love andela"
+        )
+
 
    
 

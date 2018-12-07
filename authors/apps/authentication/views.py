@@ -99,7 +99,6 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         profile.bio = bio
         profile.image = image
         profile.save()
-        print(profile.bio)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
