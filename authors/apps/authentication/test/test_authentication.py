@@ -1,7 +1,8 @@
 import json
 from django.urls import reverse
 from rest_framework.views import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase, APIClient, APIRequestFactory
+from ..views import VerifyAccount, RegistrationAPIView
 from ..models import UserManager, User
 
 
@@ -20,6 +21,17 @@ class TestUsers(APITestCase):
         }
         return user
 
+    def verify_account(self, token, uidb64):
+        request = APIRequestFactory().get(
+            reverse(
+                "activate_account",
+                kwargs={
+                    "token": token,
+                    "uidb64": uidb64}))
+        verify_account = VerifyAccount.as_view()
+        response = verify_account(request, token=token, uidb64=uidb64)
+        return response
+
     def create_user(self, username='', email='', password=''):
         user = self.generate_user(username, email, password)
         self.client.post('/api/users/', user, format='json')
@@ -31,10 +43,23 @@ class TestUsers(APITestCase):
         response = self.client.post('/api/users/', user, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
-            json.loads(response.content),
-            {"user": {"email": "athena@gmail.com", "username": "athena"}}
-        )
-
+            json.loads(
+                response.content), {
+                "user": {
+                    "message": "A verification email has been sent to athena@gmail.com"}})
+    
+    def test_cannot_login_without_verification(self):
+        self.create_user('athena', 'athena@gmail.com', 'password@user')
+        login_details = self.generate_user(
+            '', 'athena@gmail.com', 'password@user')
+        response = self.client.post(
+            '/api/users/login/', login_details, format='json')
+        self.assertEqual(
+            json.loads(
+                response.content), {
+                "errors": {
+                    "error": ["Your email is not verified, Please check your email for a verification link"]}})
+    
     def test_user_registration_empty_details(self):
         user = self.generate_user('', '', '')
         response = self.client.post('/api/users/', user, format='json')
@@ -49,6 +74,13 @@ class TestUsers(APITestCase):
         self.create_user('athena', 'athena@gmail.com', 'password@user')
         login_details = self.generate_user(
             '', 'athena@gmail.com', 'password@user')
+        request = APIRequestFactory().post(
+            reverse("registration")
+        )
+        user = User.objects.get()
+        token, uidb64 = RegistrationAPIView.generate_activation_link(
+            user, request, send=False)
+        self.verify_account(token, uidb64)
         response = self.client.post(
             '/api/users/login/', login_details, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -81,6 +113,13 @@ class TestUsers(APITestCase):
         self.create_user('soko', 'athena@gmail.com', 'Password@user1')
         login_details = self.generate_user(
             '', 'athena@gmail.com', 'Password@user1')
+        request = APIRequestFactory().post(
+            reverse("registration")
+        )
+        user = User.objects.get()
+        token, uidb64 = RegistrationAPIView.generate_activation_link(
+            user, request, send=False)
+        self.verify_account(token, uidb64)
         response = self.client.post(
             '/api/users/login/', login_details, format='json')
         token = response.data['token']
