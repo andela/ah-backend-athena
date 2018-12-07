@@ -11,6 +11,5 @@ urlpatterns = [
     path('users/', RegistrationAPIView.as_view()),
     path('users/login/', LoginAPIView.as_view()),
     path('password_reset/', PasswordResetView.as_view()),
-    url('^password_reset_confirm/(?P<slug>[-\w]+)$', PasswordResetConfirmView.as_view()),
-    # url('^password_reset_confirm/(?P<slug>[-\w]+)$', PasswordResetConfirmViewPost.as_view()),
+    path('password_reset_confirm/<slug>', PasswordResetConfirmView.as_view()),
 ]
