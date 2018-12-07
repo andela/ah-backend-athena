@@ -131,8 +131,17 @@ class PasswordResetConfirmView(RetrieveUpdateAPIView):
     def update(self, request, **kwargs):
         serializer_data = request.data
         slug = kwargs['slug'].split('-')[2]
-        user = PasswordResetView().decode_id(slug)
-    
+        try:
+            user = PasswordResetView().decode_id(slug)
+        except:
+            return Response({
+                "error":{
+                    "detail":[
+                        "Sorry, this link is invalid"
+                    ]
+                }
+            }, status=status.HTTP_400_BAD_REQUEST) 
+        
         if serializer_data['password'] == serializer_data['confirm_password']:
             serializer = self.serializer_class(
                 request.data, data=serializer_data, partial=True
