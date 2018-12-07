@@ -158,7 +158,7 @@ class PasswordResetConfirmView(RetrieveUpdateAPIView):
                 }
             }, status=status.HTTP_200_OK)
         return Response({
-            "erros":{
+            "errors":{
                 "body":[
                     "passwords do not match"
                 ]
