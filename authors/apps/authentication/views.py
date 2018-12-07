@@ -8,6 +8,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
+from .renderers import UserJSONRenderer
+from .serializers import (
+    LoginSerializer, RegistrationSerializer, UserSerializer
+)
 
 
 class RegistrationAPIView(GenericAPIView):
