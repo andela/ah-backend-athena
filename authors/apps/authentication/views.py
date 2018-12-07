@@ -64,7 +64,7 @@ class LoginAPIView(GenericAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
+class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = UserSerializer
