@@ -8,6 +8,7 @@ omit =
     */venv/*
     */.vscode/*
     *__init__*
+    */test/*
 
 [run]
 branch = true

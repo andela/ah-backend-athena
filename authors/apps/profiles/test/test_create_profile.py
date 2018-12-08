@@ -32,6 +32,14 @@ class TestProfileCreate(APITestCase):
             "soko"
         )
 
+    def test_get_non_existing_profile(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        response = self.client.get('/api/profiles/sokop')
+        self.assertEqual(
+            json.loads(response.content)['profile']['detail'],
+            "Profile does not exist."
+        )
+
     def test_update_profile(self):
         data = {
                 "user":{
