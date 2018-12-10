@@ -1,0 +1,18 @@
+[report]
+omit =
+    */python/*
+    */werkzeug/*
+    */jinja2/*
+    */flask/*
+    */markupsafe/*
+    */venv/*
+    */.vscode/*
+    *__init__*
+    */test/*
+
+[run]
+branch = true
+include = */scrapy/*
+omit =
+    tests/*
+    scrapy/xlib/*
