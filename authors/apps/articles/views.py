@@ -27,19 +27,19 @@ from .models import ArticleImg, Article, Tag, Favourites, Likes
 
 from ..profiles.models import Profile
 
+
 from .serializers import(
     CreateArticleViewSerializer,
+    UpdateRetrieveArticleViewSerializer,
     ArticleImgSerializer,
     TagsSerializer,
     FavouriteSerializer,
-    UpdateArticleViewSerializer, LikeArticleViewSerializer
+    LikeArticleViewSerializer
 
 )
 
 
 class CreateArticleView(GenericAPIView):
-
-    queryset = Article.objects.select_related('author', 'author__user')
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = CreateArticleViewSerializer
@@ -52,20 +52,7 @@ class CreateArticleView(GenericAPIView):
         and retrieve usere data
         """
 
-        image_data = article['image']
-        user_info = JWTAuthentication.authenticate()
-        article['author'] == user_detail[1]
-
-        image_obj = ArticleImg(
-            image_url=image_data['image_url'],
-            description=image_data['image_description']
-        )
-
-        image_obj.save()
-        image_instance = ArticleImg.objects.filter(
-            image_url=image_data['image_url'],
-            description=image_data['image_description']
-        ).first()
+        image_data = article.pop('images')
 
         slug = slugify(article["title"]).replace("_", "-")
         slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
@@ -76,14 +63,33 @@ class CreateArticleView(GenericAPIView):
         user_id = current_user['id']
         profile = Profile.objects.get(user__id=user_id)
 
-        article.pop('image')
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
-        serializer.save(author=profile, image=image_instance)
+        serializer.save(author=profile)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        article_ob = Article.objects.get(slug=slug)
+
+        for image_obj in image_data:
+
+            images_serializer_class = ArticleImgSerializer
+            images_serializer = images_serializer_class(
+                data=image_obj, partial=True)
+            images_serializer.is_valid(raise_exception=True)
+            images_serializer.save(article=article_ob)
+
+        image_list = ArticleImg.objects.all().filter(
+            article_id=article_ob.id).values()
+        res = serializer.data
+        images_list = []
+        for image in list(image_list):
+            image.pop('article_id')
+            images_list.append(image)
+        res['images'] = images_list
+        return Response(res, status=status.HTTP_201_CREATED)
 
     def get(self, request, slug):
+        serializer_class = UpdateRetrieveArticleViewSerializer
+
         """
          This class method is used retrieve article by id
         """
@@ -94,15 +100,24 @@ class CreateArticleView(GenericAPIView):
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
 
-        serializer.save(author=user_info[0])
-
         serializer = self.serializer_class(article)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        image_list = ArticleImg.objects.all().filter(
+            article_id=article.id).values()
+        res = serializer.data
+        images_list = []
+        for image in list(image_list):
+            image.pop('article_id')
+            images_list.append(image)
+        res['images'] = images_list
+
+        return Response(res, status=status.HTTP_200_OK)
 
     def delete(self, request, slug):
+        serializer_class = UpdateRetrieveArticleViewSerializer
+
         """
-        This method deletes a user artical
+        This methode deletes a user artical
         """
         user_data = JWTAuthentication().authenticate(request)
         profile = Profile.objects.get(user__id=user_data[0].id)
@@ -113,9 +128,10 @@ class CreateArticleView(GenericAPIView):
             if not (article.author_id == profile.id):
 
                 return Response(
-                    {"error": "Yo can only delete your own articles"},
+                    {"error": "You can only delete your own articles"},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
+            article.delete()
         except Article.DoesNotExist:
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
@@ -124,7 +140,7 @@ class CreateArticleView(GenericAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def put(self, request, slug):
-        serializer_class = UpdateArticleViewSerializer
+        serializer_class = UpdateRetrieveArticleViewSerializer
         """
             This methode updates an article
         """
@@ -138,17 +154,15 @@ class CreateArticleView(GenericAPIView):
         user_info = JWTAuthentication().authenticate(request)
         current_user = user_info[0]
         profile = Profile.objects.get(user__id=current_user.id)
-        image_data = article['image']
-
-        image_obj = ArticleImg(
-            image_url=image_data['image_url'],
-            description=image_data['image_description']
-        )
-        image_obj.save()
-
-        img_id = ArticleImg.objects.filter(
-            image_url=image_data['image_url']).first()
-        article['image'] = img_id.id
+        image_data = article['images']
+        for image in image_data:
+            image_obj = ArticleImg.objects.filter(
+                id=image['id']
+            ).first()
+            img_serializer = ArticleImgSerializer(
+                image_obj, data=image, partial=True)
+            img_serializer.is_valid(raise_exception=True)
+            img_serializer.save(article=article_obj)
 
         """ Create a new slug id from the title"""
 
@@ -161,10 +175,22 @@ class CreateArticleView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(author=profile)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        article_ob = Article.objects.get(slug=slug)
+
+        image_list = ArticleImg.objects.all().filter(
+            article_id=article_ob.id).values()
+        res = serializer.data
+        images_list = []
+        for image in list(image_list):
+            image.pop('article_id')
+            images_list.append(image)
+        res['images'] = images_list
+
+        return Response(res, status=status.HTTP_201_CREATED)
 
 
 class RetrieveArticlesAPIView(GenericAPIView):
+    serializer_class = UpdateRetrieveArticleViewSerializer
 
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ListArticlesJSONRenderer,)
@@ -173,10 +199,18 @@ class RetrieveArticlesAPIView(GenericAPIView):
         """
          This class method is used retrieve articles
         """
-        article = Article.objects.all()
+        articles = Article.objects.all()
         article_list = []
-        for art in list(article):
-            article_list.append(CreateArticleViewSerializer(art).data)
+        for article in list(articles):
+            images = ArticleImg.objects.filter(
+                article_id=article.id).values()
+            article = UpdateRetrieveArticleViewSerializer(article).data
+            images_list = []
+            for image in list(images):
+                image.pop('article_id')
+                images_list.append(image)
+            article['images'] = images_list
+            article_list.append(article)
         return Response(article_list, status=status.HTTP_200_OK)
 
 

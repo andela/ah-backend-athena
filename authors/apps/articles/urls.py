@@ -12,7 +12,6 @@ from .views import(
 )
 
 urlpatterns = [
-    path('articles/', CreateArticleView.as_view()),
     path('articles', RetrieveArticlesAPIView.as_view(),),
     path('articles/<str:slug>/like/',
          LikeArticleView.as_view(), name='article-like'),

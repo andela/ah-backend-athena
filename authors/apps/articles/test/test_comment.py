@@ -31,14 +31,15 @@ class TestComment(BaseTestArticles):
         comment_id = 1000
         data = {
             "comment": {
-    	    "article": "how-to-train-717b1570ca85",
-			"comment_body": "Hey, this is another"	
+                "article": "how-to-train-717b1570ca85",
+                "comment_body": "Hey, this is another"
             }
         }
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
         resp = self.client.put(
-            '/api/articles/{}/comments/{}/'.format(self.create_article, comment_id),
+            '/api/articles/{}/comments/{}/'.format(
+                self.create_article, comment_id),
             data, format='json')
         self.assertEqual(resp.status_code, 400)
         self.assertIn(
@@ -52,8 +53,7 @@ class TestComment(BaseTestArticles):
             '/api/articles/', data=self.article, format='json')
         data = {
             "comment": {
-    	    "article": response.data['id'],
-			"comment_body": "new update message"	
+                "comment_body": "new update message"
             }
         }
         self.client.credentials(
@@ -63,7 +63,8 @@ class TestComment(BaseTestArticles):
             self.comment, format='json')
         comment_id = res.data['id']
         resp = self.client.put(
-            '/api/articles/{}/comments/{}/'.format(self.create_article(), comment_id),
+            '/api/articles/{}/comments/{}/'.format(
+                self.create_article(), comment_id),
             data, format='json')
         self.assertEqual(resp.status_code, 200)
         self.assertIn(
@@ -73,11 +74,12 @@ class TestComment(BaseTestArticles):
     def test_users_only_update_their_comments(self):
         data = {
             "comment": {
-			"comment_body": "new update message"	
+                "comment_body": "new update message"
             }
         }
         returned_slug_article = self.create_article()
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_roni_token())
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.get_roni_token())
         res = self.client.post(
             '/api/articles/{}/comments/'.format(returned_slug_article),
             self.comment, format='json')
@@ -85,7 +87,8 @@ class TestComment(BaseTestArticles):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.get_samantha_token())
         resp = self.client.put(
-            '/api/articles/{}/comments/{}/'.format(returned_slug_article, comment_id),
+            '/api/articles/{}/comments/{}/'.format(
+                returned_slug_article, comment_id),
             data, format='json')
         self.assertEqual(resp.status_code, 403)
         self.assertIn(
@@ -95,7 +98,7 @@ class TestComment(BaseTestArticles):
     def test_user_cant_delete_another_users_comment(self):
         data = {
             "comment": {
-			"comment_body": "new update message"	
+                "comment_body": "new update message"
             }
         }
         returned_slug_article = self.create_article()
@@ -132,10 +135,11 @@ class TestComment(BaseTestArticles):
     def test_user_can_successfully_delete_comment_from_article(self):
         data = {
             "comment": {
-			"comment_body": "new update message"	
+                "comment_body": "new update message"
             }
         }
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_roni_token())
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.get_roni_token())
         res = self.client.post(
             '/api/articles/{}/comments/'.format(self.create_article()),
             self.comment, format='json')
@@ -152,9 +156,9 @@ class TestComment(BaseTestArticles):
     def test_user_successfully_reply_to_a_comment(self):
         data = {
             "reply": {
-	            "comment_body": "This is the reply body"
-                }
-	        }
+                "comment_body": "This is the reply body"
+            }
+        }
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
         res = self.client.post(
@@ -171,9 +175,9 @@ class TestComment(BaseTestArticles):
     def test_user_try_to_reply_on_a_comment_which_doesnt_exist(self):
         data = {
             "reply": {
-	            "comment_body": "This is the reply body"
-                }
-	        }
+                "comment_body": "This is the reply body"
+            }
+        }
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
         self.client.post(
@@ -226,6 +230,3 @@ class TestComment(BaseTestArticles):
             .format(returned_slug_article, comment_id),
             self.comment, format='json')
         self.assertEqual(res.status_code, 200)
-
-        
-

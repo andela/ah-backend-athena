@@ -50,11 +50,11 @@ class TestLike(APITestCase):
                 "title": "How to train your dragon",
                 "description": "Ever wonder how?",
                 "body": "You have to believe",
-                "image":{ "image_url":"http://www.andela.com",
-                    "image_description":"jsjjsjs"
-                }
+                "images": [{"image_url": "http://www.andela.com",
+                            "image_description": "jsjjsjs"
+                            }]
             }
-            }
+        }
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         response = self.client.post(
@@ -66,7 +66,7 @@ class TestLike(APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         slug = self.create_testing_article()
-        url='/api/articles/'+slug+'/like/'
+        url = '/api/articles/'+slug+'/like/'
         response = self.client.post(str(url), format='json')
         response = self.client.post(str(url), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -83,7 +83,7 @@ class TestLike(APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         slug = self.create_testing_article()
-        url='/api/articles/'+slug+'/like/'
+        url = '/api/articles/'+slug+'/like/'
         response = self.client.post(str(url), format='json')
         response = self.client.delete(str(url), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -100,7 +100,7 @@ class TestLike(APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         slug = self.create_testing_article()
-        url='/api/articles/'+slug+'/like/'
+        url = '/api/articles/'+slug+'/like/'
         response = self.client.post(str(url), format='json')
         response = self.client.delete(str(url), format='json')
         response = self.client.post(str(url), format='json')
@@ -118,7 +118,7 @@ class TestLike(APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         slug = "non_existing_slug"
-        url='/api/articles/'+slug+'/like/'
+        url = '/api/articles/'+slug+'/like/'
         response = self.client.post(str(url), format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
@@ -130,7 +130,7 @@ class TestLike(APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         slug = self.create_testing_article()
-        url='/api/articles/'+slug+'/like/'
+        url = '/api/articles/'+slug+'/like/'
         response = self.client.delete(str(url), format='json')
         response = self.client.delete(str(url), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -142,17 +142,15 @@ class TestLike(APITestCase):
             response.data['like'],
             False
         )
-        
+
     def test_dislike_non_existing_article(self):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
         slug = "non_existing_slug"
-        url='/api/articles/'+slug+'/like/'
+        url = '/api/articles/'+slug+'/like/'
         response = self.client.delete(str(url), format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data['detail'],
             'This artical doesnot exist'
         )
-
- 

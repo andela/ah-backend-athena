@@ -14,32 +14,21 @@ from .models import(
 )
 
 
-class ArticleImgSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ArticleImg
-        fields = ['id', 'image_url', 'description']
-
-
 class CreateArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
-    image = ArticleImgSerializer(read_only=True)
+    tagList = TagField(many=True, required=False, source='tags')
     """
     slug = serializers.SlugField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     """
-    tagList = TagField(many=True, required=False, source='tags')
-
     class Meta:
-
         model = Article
-
         """
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['id', 'title', 'body', 'description', 'image', 'tagList',
+        fields = ['title', 'body', 'description', 'tagList',
                   'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
     def create(self, validated_data):
@@ -67,16 +56,28 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         return instance
 
 
-class UpdateArticleViewSerializer(serializers.ModelSerializer):
+class ArticleImgSerializer(serializers.ModelSerializer):
+    article = CreateArticleViewSerializer(read_only=True)
+    image_url = serializers.URLField()
+    description = serializers.CharField()
+
+    class Meta:
+        model = ArticleImg
+        fields = ['image_url', 'description',
+                  'position_in_body_before', 'article']
+
+
+class UpdateRetrieveArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
 
     class Meta:
         model = Article
         """
-        List the fields as in create articals serializer
+        List all of the fields that could possibly be included in a request
+        or response, this includes fields specified explicitly above.
         """
-        fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', ' updated_at', ' updated_at']
+        fields = ['title', 'body', 'description',
+                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
 
 class TagsSerializer(serializers.ModelSerializer):
