@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import status, exceptions
 from rest_framework.generics import(
+    RetrieveUpdateAPIView,
     GenericAPIView
 )
 
@@ -10,6 +11,9 @@ from django.template.defaultfilters import slugify
 
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
+from .renderers import ArticleJSONRenderer
+from .models import ArticleImg, Article
+from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
@@ -20,18 +24,30 @@ from .serializers import(
 
 class createArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
-    # renderer_classes= (Someserializer) Customize serializer for this app
-    serializer_class = (CreateArticleViewSerializer,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = CreateArticleViewSerializer
 
     def post(self, request):
         """ The post method is used to create articles"""
         article = request.data.get('article', {})
         """
-        call the JWTAuthentication class to decode token 
-        and retrieve user data
+        call the JWTAuthentication class to decode token
+        and retrieve usere data
         """
-        user_info = JWTAuthentication.authenticate()
-        article['author'] == user_infol[1]
+        # user_info = JWTAuthentication().authenticate(request)
+
+        # # article['author'] = user_info[0]
+
+        image_data = article['image']
+
+        image_obj = ArticleImg(
+            image_url=image_data['image_url'],
+            description=image_data['image_description']
+        )
+        image_obj.save()
+        img_id = ArticleImg.objects.filter(
+            image_url=image_data['image_url']).first()
+        article['image'] = img_id.id
 
         """create slug from an artical"""
         if article['slug'] == '':
@@ -41,8 +57,13 @@ class createArticleView(GenericAPIView):
             except KeyError:
                 pass
 
+        current_user = User.objects.all().filter(
+            email=request.user).values()[0]
+        user_id = current_user['id']
+        profile = Profile.objects.get(user__id=user_id)
+
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
-        serializer.save(author=user_data[0])
-        data = serializer.data
-        data["message"] = "Article created successfully."
+        serializer.save(author=profile)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
