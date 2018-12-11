@@ -5,14 +5,6 @@ certifi==2018.11.29
 chardet==3.0.4
 coreapi==2.3.3
 coreschema==0.0.4
-<<<<<<< HEAD
-coverage==4.5.2
-certifi==2018.11.29
-chardet==3.0.4
-coreapi==2.3.3
-coreschema==0.0.4
-=======
->>>>>>> feat(articals): Users can create articles
 coverage==4.5.2
 coveralls==1.5.1
 dj-database-url==0.5.0
@@ -42,13 +34,6 @@ mccabe==0.6.1
 oauthlib==2.1.0
 pep8==1.7.1
 Pillow==5.3.0
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-Pillow==5.3.0
-=======
->>>>>>> feat(articals): Users can create articles
->>>>>>> feat(articals): Users can create articles
 post==2018.11.20
 psycopg2==2.7.6.1
 psycopg2-binary==2.7.6.1
@@ -63,16 +48,6 @@ pylint-plugin-utils==0.4
 python-dotenv==0.9.1
 python-twitter==3.5
 pytz==2018.7
-<<<<<<< HEAD
-=======
-query-string==2018.11.20
-request==2018.11.20
-requests==2.20.1
-requests-oauthlib==1.0.0
-rope==0.11.0
-rsa==4.0
-ruamel.yaml==0.15.80
->>>>>>> feat(articals): Users can create articles
 query-string==2018.11.20
 request==2018.11.20
 requests==2.20.1
