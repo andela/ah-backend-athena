@@ -16,20 +16,27 @@ from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article
+from .models import ArticleImg, Article, Comment
 from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
-
+    CommentSerializer,
+    RepliesSerializer,
     UpdateArticleViewSerializer,
 
 )
 
+def get_object(obj_class, Id):
+    try:
+        return obj_class.objects.get(pk=Id)
+    except obj_class.DoesNotExist:
+        return Response('object does not exist', Http404)
 
 class CreateArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
+    # renderer_classes= (Someserializer) Customize serializer for this app
     serializer_class = CreateArticleViewSerializer
 
     def post(self, request):
@@ -126,3 +133,67 @@ class ListAuthArticlesAPIView(ListAPIView):
         if len(articles) == 0:
             raise ArticlesNotExist
         return articles
+        serializer.save(author= user_data[0])
+        data = serializer.data
+        data["message"] = "Article created successfully."
+
+
+class CommentView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = CommentSerializer
+    # renderer_classes = (CommentJSONRenderer, )
+
+    def post(self, request, **kwargs):
+        slug = self.kwargs['slug']
+        comment = request.data.get('comment', {})
+        article = Article.objects.get(slug=slug)
+        
+        author = request.user
+        comment['author'] = author.id
+        comment['article'] = article.id
+        serializer = self.serializer_class(data=comment)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+    def put(self, request, *args, **kwargs):
+        Id = kwargs['id']
+        copy = get_object(Comment, Id)
+        print(copy)
+        comment = request.data.get('comment', {})
+        comment['author'] = request.user.id
+        serializer = self.serializer_class(copy, data=comment)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, **kwargs):
+        comment_obj = Comment.objects.get(id=kwargs['id'])
+        todelete = comment_obj
+        if str(comment_obj):
+            todelete.delete()
+        else:
+            return Response("message", "Comment deleted successfully", status=400)
+        return Response(status=status.HTTP_200_OK)
+
+
+class RepliesView(GenericAPIView):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = RepliesSerializer
+
+    def post(self, request):
+        reply = request.data.get('reply', {})
+        comment = Comment.objects.get(id=6)
+        author = request.user
+        reply['author'] = author.id
+        reply['comment'] = comment.id
+        serializer = self.serializer_class(data=reply)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+
+    
+
+        
+

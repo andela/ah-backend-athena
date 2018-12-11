@@ -55,3 +55,40 @@ class Article(models.Model):
 
     class Meta:
         ordering = ["-created_at", "-updated_at"]
+
+class Comment(models.Model):
+    """ 
+    This model implements adding comments to
+    the user article
+    """
+
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment_body = models.TextField(blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.comment_body
+
+    class Meta:
+        get_latest_by = ['created_at']
+
+
+
+class Replies(models.Model):
+    """
+    Model to create a reply on the comment
+    """
+
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    reply_body = models.TextField(blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.reply_body
+
+    class Meta:
+        ordering = ['created_at']
+

@@ -174,6 +174,13 @@ EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
 EMAIL_USE_TLS = os.getenv('TLS', True)
 
 
-
 # Activate Django-Heroku; must be at the very bottom
 django_heroku.settings(locals())
+
+#athena client ID
+GOOGLE_CLIENT_ID='399794902926-o2j33g8hv0gq1ceq55jq043adhgcucst.apps.googleusercontent.com'
+GOOGLE_SECRET_ID='yv6_4HM1bfpusdU2A_BnZiFG'
+
+
+TWITTER_CONSUMER_KEY="yj5UIUoBqhCFiCHyCAPnXC5D1"
+TWITTER_CONSUMER_SECRET="myDehITIgAfuzdgO7Az2GEFFfwrIhcgeh40xx5nk2XLxZzIMpS"
