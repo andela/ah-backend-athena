@@ -1,7 +1,7 @@
+import re
 from django.contrib.auth import authenticate
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 from rest_framework.exceptions import ValidationError
-
 from .models import User
 from .social.google_token_validator import GoogleValidate
 from .social.facebook_token_validator import FacebookValidate
@@ -11,22 +11,74 @@ from .social.twitter_token_validator import TwitterValidate
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializers registration requests and creates a new user."""
 
-    # Ensure passwords are at least 8 characters long, no longer than 128
-    # characters, and can not be read by the client.
     password = serializers.CharField(
-        max_length=128,
-        min_length=8,
         write_only=True
     )
+    """
+    Overide default varidation to make sure users receive descriptive
+    error messages
+    """
+    email = serializers.EmailField()
+    username = serializers.CharField()
 
     # The client should not be able to send a token along with a registration
     # request. Making `token` read-only handles that for us.
 
     class Meta:
         model = User
+
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
+
         fields = ['email', 'username', 'password']
+
+    def validate_password(self, password):
+        """
+        User's password should be between 8 to 128 characters
+        and  should contain atleas one number and a capital letter
+        """
+        msg = 'Passwords must be between 8 to 128 characters'
+        if not len(password) > 8:
+            raise serializers.ValidationError(msg)
+
+        if not len(password) < 128:
+            raise serializers.ValidationError(msg)
+
+        if re.search('[0-9]', password) is None\
+                and re.search('[A-Z]', password) is None:
+            raise serializers.ValidationError(
+                'Password must contain atleast one number and a capital letter'
+            )
+        return password
+
+    def validate_email(self, email):
+        email_db = User.objects.filter(email=email)
+        if email_db.exists():
+            raise serializers.ValidationError(
+                'A user with that email adress already exists'
+            )
+        return email
+
+    def validate_username(self, username):
+
+        username_db = User.objects.filter(username=username)
+        if username_db.exists():
+            raise serializers.ValidationError(
+                'The user name you entered is already taken, try another one'
+            )
+
+        msg = 'User names must be between 3 and 10 characters'
+        if not len(username) > 3:
+            raise serializers.ValidationError(msg)
+
+        if not len(username) < 10:
+            raise serializers.ValidationError(msg)
+
+        if re.match('^[A-Za-z0-9_]*$', username) is None:
+            raise serializers.ValidationError(
+                'User names must be characters, letters and underscores only'
+            )
+        return username
 
     def create(self, validated_data):
         # Use the `create_user` method we wrote earlier to create a new user.
@@ -66,6 +118,7 @@ class LoginSerializer(serializers.Serializer):
         # for a user that matches this email/password combination. Notice how
         # we pass `email` as the `username` value. Remember that, in our User
         # model, we set `USERNAME_FIELD` as `email`.
+
         user = authenticate(username=email, password=password)
 
         # If no user was found matching this email/password combination then
@@ -164,7 +217,7 @@ class PasswordResetSerializer(serializers.Serializer):
         check if the email entered has a corresponding user
         """
         user = User.objects.filter(email=email).first()
-        
+
         if not user:
             raise serializers.ValidationError(
                 'User with this email is not found'
@@ -326,3 +379,4 @@ class TwitterAuthSerializer(serializers.ModelSerializer):
         authenticated_user = User.objects.get(
             social_id=twitter_user_data.get('id_str'))
         return authenticated_user.token()
+

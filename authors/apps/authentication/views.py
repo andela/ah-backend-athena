@@ -38,12 +38,6 @@ from django.conf import settings
 from datetime import timedelta
 from django.core.signing import TimestampSigner
 
-from .models import User
-from .renderers import UserJSONRenderer
-from .serializers import (
-    LoginSerializer, RegistrationSerializer, UserSerializer
-)
-
 
 class RegistrationAPIView(GenericAPIView):
     # Allow any user (authenticated or not) to hit this endpoint.
@@ -93,7 +87,7 @@ class RegistrationAPIView(GenericAPIView):
                 recipient_list=to_list,
                 message=message,
                 fail_silently=False)
-                                    
+
         return token, uidb64
 
 
@@ -142,16 +136,16 @@ class FacebookAuthAPIView(GenericAPIView):
 
 
 class TwitterAuthAPIView(GenericAPIView):
-   permission_classes = (AllowAny,)
-   renderer_classes = (UserJSONRenderer,)
-   serializer_class = TwitterAuthSerializer
+    permission_classes = (AllowAny,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = TwitterAuthSerializer
 
-   def post(self, request):
-       token = request.data.get('token', {})
-       serializer = self.serializer_class(data={'auth_token': token})
-       serializer.is_valid(raise_exception=True)
-       res = {"jwt_token": serializer.data['auth_token']}
-       return Response(res, status=status.HTTP_200_OK)
+    def post(self, request):
+        token = request.data.get('token', {})
+        serializer = self.serializer_class(data={'auth_token': token})
+        serializer.is_valid(raise_exception=True)
+        res = {"jwt_token": serializer.data['auth_token']}
+        return Response(res, status=status.HTTP_200_OK)
 
 
 class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
@@ -170,18 +164,18 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         serializer_data = request.data.get('user', {})
 
-
         serializer = self.serializer_class(
             request.user, data=serializer_data, partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        
+
         bio = serializer_data.get('bio', request.user.profile.bio)
         image = serializer_data.get('image', request.user.profile.image)
 
-        #gets loggedin user id and gets profile object of the user and updates profile
-        user_id = User.objects.all().filter(email=request.user).values()[0]['id']
+        # gets loggedin user id and gets profile object of the user and updates profile
+        user_id = User.objects.all().filter(
+            email=request.user).values()[0]['id']
         profile = Profile.objects.get(user__id=user_id)
         profile.bio = bio
         profile.image = image
@@ -193,7 +187,7 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 class PasswordResetView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = PasswordResetSerializer
-    
+
     @classmethod
     def decode_id(self, uid):
         username = urlsafe_base64_decode(uid).decode('utf-8')
@@ -215,17 +209,19 @@ class PasswordResetView(GenericAPIView):
         to_mail = user.email
         recipient_list = [to_mail]
 
-        send_mail(subject, message, email_from, recipient_list, fail_silently=False)
+        send_mail(subject, message, email_from,
+                  recipient_list, fail_silently=False)
 
-        res = {"message":"An email has been to this email"}
+        res = {"message": "An email has been to this email"}
         return Response(res, status.HTTP_200_OK)
+
 
 class PasswordResetConfirmView(RetrieveUpdateAPIView):
     permission_classes = (AllowAny,)
-    serializer_class =PasswordResetConfirmSerializer
+    serializer_class = PasswordResetConfirmSerializer
 
     def get_object(self):
-        return {"password":"", "confirm_password":""}
+        return {"password": "", "confirm_password": ""}
 
     def update(self, request, **kwargs):
         serializer_data = request.data
@@ -234,13 +230,13 @@ class PasswordResetConfirmView(RetrieveUpdateAPIView):
             user = PasswordResetView().decode_id(slug)
         except:
             return Response({
-                "error":{
-                    "detail":[
+                "error": {
+                    "detail": [
                         "Sorry, this link is invalid"
                     ]
                 }
-            }, status=status.HTTP_400_BAD_REQUEST) 
-        
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         if serializer_data['password'] == serializer_data['confirm_password']:
             serializer = self.serializer_class(
                 request.data, data=serializer_data, partial=True
@@ -250,19 +246,20 @@ class PasswordResetConfirmView(RetrieveUpdateAPIView):
             User.objects.filter(username=user).update(password=new_password)
 
             return Response({
-                "message":{
-                    "detail":[
+                "message": {
+                    "detail": [
                         "Password successfully reset"
                     ]
                 }
             }, status=status.HTTP_200_OK)
         return Response({
-            "errors":{
-                "body":[
+            "errors": {
+                "body": [
                     "passwords do not match"
                 ]
             }
         }, status=status.HTTP_400_BAD_REQUEST)
+
 
 class VerifyAccount(GenericAPIView):
 

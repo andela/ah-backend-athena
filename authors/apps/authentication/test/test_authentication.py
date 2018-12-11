@@ -2,6 +2,9 @@ import json
 from django.urls import reverse
 from rest_framework.views import status
 from rest_framework.test import APITestCase, APIClient, APIRequestFactory
+
+from ..serializers import LoginSerializer
+from rest_framework.exceptions import ValidationError
 from ..views import VerifyAccount, RegistrationAPIView
 from ..models import UserManager, User
 
@@ -48,7 +51,7 @@ class TestUsers(APITestCase):
 
     def test_user_registration(self):
         user = self.generate_user(
-            'athena', 'athena@gmail.com', 'password@user')
+            'athena', 'athena@gmail.com', 'P1assword@user')
         response = self.client.post('/api/users/', user, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
@@ -56,11 +59,11 @@ class TestUsers(APITestCase):
                 response.content), {
                 "user": {
                     "message": "A verification email has been sent to athena@gmail.com"}})
-    
+
     def test_cannot_login_without_verification(self):
-        self.create_user('athena', 'athena@gmail.com', 'password@user')
+        self.create_user('athena', 'athena@gmail.com', 'P1assword@user')
         login_details = self.generate_user(
-            '', 'athena@gmail.com', 'password@user')
+            '', 'athena@gmail.com', 'P1assword@user')
         response = self.client.post(
             '/api/users/login/', login_details, format='json')
         self.assertEqual(
@@ -68,21 +71,21 @@ class TestUsers(APITestCase):
                 response.content), {
                 "errors": {
                     "error": ["Your email is not verified, Please check your email for a verification link"]}})
-    
+
     def test_user_registration_empty_details(self):
         user = self.generate_user('', '', '')
         response = self.client.post('/api/users/', user, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_registration_wrong_email_format(self):
-        user = self.generate_user('athena', 'athenmail', 'password@user')
+        user = self.generate_user('athena', 'athenmail', 'P1assword@user')
         response = self.client.post('/api/users/', user, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_login(self):
-        self.create_user('athena', 'athena@gmail.com', 'password@user')
+        self.create_user('athena', 'athena@gmail.com', '1Password@user')
         login_details = self.generate_user(
-            '', 'athena@gmail.com', 'password@user')
+            '', 'athena@gmail.com', '1Password@user')
         request = APIRequestFactory().post(
             reverse("registration")
         )
@@ -172,6 +175,26 @@ class TestUsers(APITestCase):
             },
             json.loads(response.content))
 
+    def test_email_is_required(self):
+        data = {
+            "email": None,
+            "password": "Password1"
+        }
+        with self.assertRaises(ValidationError) as email_error:
+            LoginSerializer().validate(data)
+        exce = email_error.exception
+        self.assertIn('An email address is required to log in', str(exce))
+
+    def test_password_is_required(self):
+        data = {
+            "email": 'athena@gmail.com',
+            "password": None
+        }
+        with self.assertRaises(ValidationError) as pass_error:
+            LoginSerializer().validate(data)
+        exce = pass_error.exception
+        self.assertIn('A password is required to log in.', str(exce))
+
 
 class TestSocialAuthUsers(APITestCase):
 
@@ -180,10 +203,10 @@ class TestSocialAuthUsers(APITestCase):
             'user': {
                 'email': email,
                 'username': username,
-                'password': password
+                'password': "45fdcgcWQjjhvnkb"
             }
         }
-        self.client.post('/api/users/', user, format='json')
+        res = self.client.post('/api/users/', user, format='json')
 
     def test_google_validate_token_is_called(self):
         with patch('authors.apps.authentication.social.google_token_validator.id_token.verify_oauth2_token') as mock_google_validate:
@@ -220,7 +243,6 @@ class TestSocialAuthUsers(APITestCase):
                              "Response status should be 200 OK")
             self.assertIn("jwt_token", json.loads(res.content)['user'])
 
-
     def test_google_login_invalid_token(self):
         with patch('authors.apps.authentication.social.google_token_validator.GoogleValidate.validate_google_token') as mock_google_validate:
             mock_google_validate.return_value = None
@@ -243,14 +265,14 @@ class TestSocialAuthUsers(APITestCase):
                              "auth_token": ["Token is not valid or has expired. Please get a new one."]}})
 
     def test_google_user_with_attached_email_already_exists_in_db(self):
-        self.save_user_to_db('andrew','andrew@a.com','P@ssword')
+        self.save_user_to_db('andrew', 'andrew@a.com', '1P@ssword')
         with patch('authors.apps.authentication.social.google_token_validator.GoogleValidate.validate_google_token') as mock_google_validate:
             mock_google_validate.return_value = {
                 "name": "andrew", "email": "andrew@a.com", "sub": "104383024388008549815"}
             res = self.client.post(
                 '/api/users/google/', {"token": "valid token for google"}, format='json')
             self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST,
-                                "Response status should be 400 BAD REQUEST")
+                             "Response status should be 400 BAD REQUEST")
             self.assertEqual(json.loads(res.content), {"errors": {
                              "auth_token": ["Failed to register the user. Email already exists in the database"]}})
 
@@ -315,14 +337,14 @@ class TestSocialAuthUsers(APITestCase):
                              "auth_token": ["Token is not valid or has expired. Please get a new one."]}})
 
     def test_facebook_user_with_attached_email_already_exists_in_db(self):
-        self.save_user_to_db('andrew','andrew@a.com','P@ssword')
+        self.save_user_to_db('andrew', 'andrew@a.com', 'P@ssword1')
         with patch('authors.apps.authentication.social.facebook_token_validator.FacebookValidate.validate_facebook_token') as mock_facebook_validate:
             mock_facebook_validate.return_value = {
                 "name": "andrew", "email": "andrew@a.com", "id": "104383024388008549815"}
             res = self.client.post(
                 '/api/users/facebook/', {"token": "valid token for facebook"}, format='json')
             self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST,
-                                "Response status should be 400 BAD REQUEST")
+                             "Response status should be 400 BAD REQUEST")
             self.assertEqual(json.loads(res.content), {"errors": {
                              "auth_token": ["Failed to register the user. Email already exists in the database"]}})
 
@@ -382,15 +404,15 @@ class TestSocialAuthUsers(APITestCase):
                              "Response status should be 400 BAD REQUEST")
             self.assertEqual(json.loads(res.content), {"errors": {
                              "auth_token": ["Token is not valid or has expired. Please get a new one."]}})
-    
+
     def test_twitter_user_with_attached_email_already_exists_in_db(self):
-        self.save_user_to_db('andrew','andrew@a.com','P@ssword')
+        self.save_user_to_db('andrew', 'andrew@a.com', 'P@ssword')
         with patch('authors.apps.authentication.social.twitter_token_validator.TwitterValidate.validate_twitter_token') as mock_twitter_validate:
             mock_twitter_validate.return_value = {
                 "name": "andrew", "email": "andrew@a.com", "id_str": "104383024388008549815"}
             res = self.client.post(
                 '/api/users/twitter/', {"token": "valid token for twitter"}, format='json')
             self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST,
-                                "Response status should be 400 BAD REQUEST")
+                             "Response status should be 400 BAD REQUEST")
             self.assertEqual(json.loads(res.content), {"errors": {
                              "auth_token": ["Failed to register the user. Email already exists in the database"]}})
