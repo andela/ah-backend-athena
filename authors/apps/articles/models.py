@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 from ..authentication.models import User
+from ..profiles.models import Profile
 from django.db import models
 
 
 class ArticleImg(models.Model):
-    image = models.CharField(null=True, max_length=255, blank=True)
+    image_url = models.URLField(blank=True, null=True)
     description = models.CharField(db_index=True, max_length=255)
 
 
@@ -15,19 +16,19 @@ class Article(models.Model):
     """
 
     """Every modle a title ield"""
-    tittle = models.CharField(db_index=True, max_length=255)
+    title = models.CharField(db_index=True, max_length=255)
 
     """The author field identifies an article with a certain user."""
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE)
 
     """The body field is the actual body of the article."""
     body = models.TextField(db_index=True)
 
     """An article can have images in the body"""
-    image = models.ForeignKey(ArticleImgs, on_delete=models.CASCADE)
+    image = models.ForeignKey(ArticleImg, on_delete=models.CASCADE)
 
     """A description contains what the article is about"""
-    description = models.CharField(db_index=True, max_length=255)
+    description = models.CharField(db_index=True, max_length=255, null=True)
 
     """. The slug field makes the article searchable it can be 
     auto generated or specified by the author."""
