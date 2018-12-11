@@ -7,14 +7,15 @@ from rest_framework.generics import(
     RetrieveUpdateAPIView,
     GenericAPIView,
     ListAPIView,
-    CreateAPIView
+    CreateAPIView,
+    RetrieveUpdateAPIView
 )
 
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly
-       )
+)
 from rest_framework.response import Response
 from rest_framework import exceptions
 from django.template.defaultfilters import slugify
@@ -37,12 +38,12 @@ from .serializers import(
 
 
 class CreateArticleView(GenericAPIView):
-        
+
     queryset = Article.objects.select_related('author', 'author__user')
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = CreateArticleViewSerializer
-    
+
     def post(self, request):
         """ The post method is used to create articles"""
         article = request.data.get('article', {})
@@ -50,8 +51,10 @@ class CreateArticleView(GenericAPIView):
         call the JWTAuthentication class to decode token
         and retrieve usere data
         """
-        
+
         image_data = article['image']
+        user_info = JWTAuthentication.authenticate()
+        article['author'] == user_detail[1]
 
         image_obj = ArticleImg(
             image_url=image_data['image_url'],
@@ -90,6 +93,8 @@ class CreateArticleView(GenericAPIView):
         if not article:
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
+
+        serializer.save(author=user_info[0])
 
         serializer = self.serializer_class(article)
 
@@ -174,6 +179,7 @@ class RetrieveArticlesAPIView(GenericAPIView):
             article_list.append(CreateArticleViewSerializer(art).data)
         return Response(article_list, status=status.HTTP_200_OK)
 
+
 class ArticleTagsAPIView(GenericAPIView):
     queryset = Tag.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -181,13 +187,14 @@ class ArticleTagsAPIView(GenericAPIView):
     def get(self, request, *args, **kwargs):
         slug = kwargs['slug']
         article = Article.objects.filter(
-                slug=slug
-            ).first()
+            slug=slug
+        ).first()
         serializer = CreateArticleViewSerializer(article).data
         tags = serializer["tagList"]
         return Response({
             'tags': tags
         }, status=status.HTTP_200_OK)
+
 
 class ArticleDeleteAPIView(GenericAPIView):
 
@@ -195,19 +202,19 @@ class ArticleDeleteAPIView(GenericAPIView):
         slug = kwargs['slug']
         tag = kwargs['tag']
         article = Article.objects.filter(
-                slug=slug
-            ).first()
+            slug=slug
+        ).first()
         serializer = CreateArticleViewSerializer(article).data
         tags = serializer["tagList"]
         for each in tags:
-                one = Tag.objects.get(tag=tag)
-                if one:
-                    article.tags.remove(one)
+            one = Tag.objects.get(tag=tag)
+            if one:
+                article.tags.remove(one)
 
         output = TagsSerializer(article)
         return Response(output.data)
 
-    
+
 class FavouritesView(GenericAPIView):
     serializer_class = FavouriteSerializer
     permission_classes = (IsAuthenticated,)
@@ -223,26 +230,26 @@ class FavouritesView(GenericAPIView):
             article_id = article_obj.id
         except:
             return Response({
-                "error":{
-                    "body":[
+                "error": {
+                    "body": [
                         "article doesnot exist"
                     ]
                 }
             },
-            status=400    
-        )
+                status=400
+            )
 
         fav = Favourites.objects.filter(
             article_id=article_id
         ).filter(
-            profile = profile
+            profile=profile
         )
         fav_option = fav.first()
         if fav_option:
             return Response(
                 {
-                    "error":{
-                        "body":[
+                    "error": {
+                        "body": [
                             "article already favorited"
                         ]
                     }
@@ -250,17 +257,18 @@ class FavouritesView(GenericAPIView):
                 status=409
             )
         else:
-            
-            serializer = self.serializer_class(data={},partial=True)
+
+            serializer = self.serializer_class(data={}, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save(profile=profile,article=article_obj,favourite=True)
-            
+            serializer.save(profile=profile,
+                            article=article_obj, favourite=True)
+
             favs = Favourites.objects.filter(
                 article_id=article_id
-                ).filter(
-                    favourite=True
+            ).filter(
+                favourite=True
             )
-            
+
             article_obj.favourited = True
             article_obj.favouriteCount = favs.count()
             article_obj.save()
@@ -276,36 +284,34 @@ class FavouritesView(GenericAPIView):
             articel_id = article_obj.id
         except:
             return Response({
-                "error":{
-                    "body":[
+                "error": {
+                    "body": [
                         "article doesnot exist"
                     ]
                 }
             },
-            status=400    
-        )
+                status=400
+            )
         fav = Favourites.objects.filter(
             article_id=articel_id
         ).filter(
-            profile = profile
+            profile=profile
         )
         if fav:
             fav.delete()
         article_obj.favourited = False
         article_obj.save()
-        serializer = self.serializer_class(data={},partial=True)
+        serializer = self.serializer_class(data={}, partial=True)
         serializer.is_valid(raise_exception=True)
-        
+
         return Response({
-            "message":{
-                "body":[
+            "message": {
+                "body": [
                     "article has been unfavorited"
                 ]
             }
         }, status=200)
 
-
-    
 
 class LikeArticleView(GenericAPIView):
     def post(self, request, slug):
@@ -314,14 +320,15 @@ class LikeArticleView(GenericAPIView):
 
         try:
             current_article = Article.objects.get(
-            slug=slug)
+                slug=slug)
         except Article.DoesNotExist:
             raise exceptions.NotFound(
                 'This artical doesnot exist'
             )
-        
-        user_like_options = Likes.objects.filter(profile=profile).filter(article__slug=slug)
-        
+
+        user_like_options = Likes.objects.filter(
+            profile=profile).filter(article__slug=slug)
+
         if len(user_like_options) >= 1:
             user_like_option = user_like_options.first()
             if not user_like_option.like:
@@ -333,27 +340,27 @@ class LikeArticleView(GenericAPIView):
         else:
             current_article.likes_count = current_article.likes_count + 1
             current_article.save()
-            serializer = LikeArticleViewSerializer(data={ "like":True })
+            serializer = LikeArticleViewSerializer(data={"like": True})
             serializer.is_valid(raise_exception=True)
-            serializer.save(article=current_article, profile= profile)
-        
+            serializer.save(article=current_article, profile=profile)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    
     def delete(self, request, slug):
         user_id = JWTAuthentication().authenticate(request)[0].id
         profile = Profile.objects.get(user__id=user_id)
 
         try:
             current_article = Article.objects.get(
-            slug=slug)
+                slug=slug)
         except Article.DoesNotExist:
             raise exceptions.NotFound(
                 'This artical doesnot exist'
             )
 
-        user_like_options = Likes.objects.filter(profile=profile).filter(article__slug=slug)
-        
+        user_like_options = Likes.objects.filter(
+            profile=profile).filter(article__slug=slug)
+
         if len(user_like_options) >= 1:
 
             user_like_option = user_like_options.first()
@@ -366,9 +373,8 @@ class LikeArticleView(GenericAPIView):
         else:
             current_article.likes_count = current_article.likes_count - 1
             current_article.save()
-            serializer = LikeArticleViewSerializer(data={ "like":False })
+            serializer = LikeArticleViewSerializer(data={"like": False})
             serializer.is_valid(raise_exception=True)
-            serializer.save(article=current_article, profile= profile)
-        
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer.save(article=current_article, profile=profile)
 
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
