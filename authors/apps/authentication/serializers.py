@@ -3,6 +3,9 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from .models import User
+from .social.google_token_validator import GoogleValidate
+from .social.facebook_token_validator import FacebookValidate
+from .social.twitter_token_validator import TwitterValidate
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -99,7 +102,7 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
-    # Passwords must be at least 8 characters, but no more than 128 
+    # Passwords must be at least 8 characters, but no more than 128
     # characters. These values are the default provided by Django. We could
     # change them, but that would create extra work while introducing no real
     # benefit, so let's just stick with the defaults.
@@ -117,7 +120,7 @@ class UserSerializer(serializers.ModelSerializer):
         # specifying the field with `read_only=True` like we did for password
         # above. The reason we want to use `read_only_fields` here is because
         # we don't need to specify anything else about the field. For the
-        # password field, we needed to specify the `min_length` and 
+        # password field, we needed to specify the `min_length` and
         # `max_length` properties too, but that isn't the case for the token
         # field.
 
@@ -183,3 +186,143 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     )
 
 
+class GoogleAuthSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the google social login/user creation
+    """
+    auth_token = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ['auth_token']
+
+    def validate_auth_token(self, auth_token):
+        """
+        Validate auth_token, decode the auth_token, retrieve user info
+        """
+
+        decoded_google_user_data = GoogleValidate.validate_google_token(
+            auth_token)
+
+        if decoded_google_user_data is None:
+            raise serializers.ValidationError(
+                'Invalid token please try again'
+            )
+
+        if 'sub' not in decoded_google_user_data:  
+            raise serializers.ValidationError(
+                'Token is not valid or has expired. Please get a new one.'
+            )
+
+        user = User.objects.filter(social_id=decoded_google_user_data.get('sub'))
+        if not user.exists():
+            user_obj = {
+                'social_id': decoded_google_user_data.get('sub'),
+                'username': decoded_google_user_data.get('name', decoded_google_user_data['email']),
+                'email': decoded_google_user_data.get('email'),
+                'password': 'Password@AAA'
+            }
+
+            try:
+                User.objects.create_user(**user_obj)
+            except:
+                raise serializers.ValidationError(
+                    'Failed to register the user. Email already exists in the database')
+
+        authenticated_user = User.objects.get(
+            social_id=decoded_google_user_data.get('sub'))
+        return authenticated_user.token()
+
+
+class FacebookAuthSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the facebook social login/user creation
+    """
+
+    auth_token = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ['auth_token']
+
+    def validate_auth_token(self, auth_token):
+        """
+        Validate auth_token, decode the auth_token, retrieve user info
+        """
+
+        facebook_user_data = FacebookValidate.validate_facebook_token(
+            auth_token)
+
+        if facebook_user_data is None:
+            raise serializers.ValidationError(
+                'Invalid token please try again'
+            )
+
+        if 'id' not in facebook_user_data:  
+            raise serializers.ValidationError(
+                'Token is not valid or has expired. Please get a new one.'
+            )
+
+        user = User.objects.filter(social_id=facebook_user_data.get('id'))
+        if not user.exists():
+            user_obj = {
+                'social_id': facebook_user_data.get('id'),
+                'username': facebook_user_data.get('name', facebook_user_data.get('email')),
+                'email': facebook_user_data.get('email'),
+                'password': 'Password@AAA'
+            }
+
+            try:
+                User.objects.create_user(**user_obj)
+            except:
+                raise serializers.ValidationError(
+                    'Failed to register the user. Email already exists in the database')
+
+        authenticated_user = User.objects.get(
+            social_id=facebook_user_data.get('id'))
+        return authenticated_user.token()
+
+
+class TwitterAuthSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the twitter social login/user creation
+    """
+
+    auth_token = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ['auth_token']
+
+    def validate_auth_token(self, auth_token):
+
+        twitter_user_data = TwitterValidate.validate_twitter_token(
+            auth_token)
+        if twitter_user_data is None:
+            raise serializers.ValidationError(
+                'Invalid token please try again'
+            )
+
+        if 'id_str' not in twitter_user_data:  
+            raise serializers.ValidationError(
+                'Token is not valid or has expired. Please get a new one.'
+            )
+
+        user = User.objects.filter(social_id=twitter_user_data.get('id_str'))
+        if not user.exists():
+            user_obj = {
+                'social_id': twitter_user_data.get('id_str'),
+                'username': twitter_user_data.get('name'),
+                'email': twitter_user_data.get('email'), 
+                'password': 'Password@AAA'
+            }
+
+            try:
+                User.objects.create_user(**user_obj)
+            except:
+                raise serializers.ValidationError(
+                    'Failed to register the user. Email already exists in the database')
+
+        authenticated_user = User.objects.get(
+            social_id=twitter_user_data.get('id_str'))
+        return authenticated_user.token()
