@@ -13,8 +13,14 @@ from .models import(
     Favourites, Likes,
     Readings,
     Bookmarks,
-    ReportArticle
+    ReportArticle,
+    Ratings
 )
+class ArticleImgSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ArticleImg
+        fields = ['id', 'image_url', 'description']
 
 
 class CreateArticleViewSerializer(serializers.ModelSerializer):
@@ -51,7 +57,7 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         instance.tags.clear()
         for tag in tags:
             instance.tags.add(tag)
-
+            
         for (key, value) in validated_data.items():
             setattr(instance, key, value)
 
@@ -82,7 +88,6 @@ class UpdateRetrieveArticleViewSerializer(serializers.ModelSerializer):
         fields = ['title', 'body', 'description', 'tagList',
                   'author', 'slug', 'published', 'created_at', 'updated_at',]
 
-
 class TagsSerializer(serializers.ModelSerializer):
     article = serializers.SerializerMethodField()
     tags = TagField(many=True)
@@ -103,7 +108,6 @@ class FavouriteSerializer(serializers.ModelSerializer):
         fields = [
             'article', 'favourite', 'profile'
         ]
-
 
 class LikeArticleViewSerializer(serializers.ModelSerializer):
     article = CreateArticleViewSerializer(read_only=True)
@@ -147,3 +151,9 @@ class ReportArticleSerializer(serializers.ModelSerializer):
         model = ReportArticle
         fields = ['article_id', 'article_slug',
                   'reported_by', 'reason', 'reported_at', ]
+class RatingSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(read_only=False)
+    
+    class Meta:
+        model = Ratings
+        fields = ['article','user_id','rating']

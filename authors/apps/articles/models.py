@@ -4,7 +4,6 @@ from ..profiles.models import Profile
 from django.db import models
 from django.template.defaultfilters import slugify
 
-
 class Article(models.Model):
     """
     This class implements an article model,the author field
@@ -21,12 +20,11 @@ class Article(models.Model):
     body = models.TextField(db_index=True)
 
     """A description contains what the article is about"""
-    description = models.CharField(db_index=True, max_length=255, null=True)
+    description = models.CharField(db_index=True, max_length=255)
 
     """. The slug field makes the article searchable it can be 
     auto generated or specified by the author."""
-    slug = models.SlugField(
-        db_index=True, max_length=255, unique=True, blank=False)
+    slug = models.SlugField(db_index=True, max_length=255, unique=True)
 
     """
     Published is like a draft field, helps authors to wor
@@ -60,10 +58,16 @@ class Article(models.Model):
     view_count = models.IntegerField(default=0)
     read_count = models.IntegerField(default=0)
 
+    """
+    Store the average rating for each article.
+    """
+    avg_rating = models.DecimalField(default=0, max_digits=3, decimal_places=1)
+
     objects = models.Manager()
 
     def __str__(self):
         return self.title
+    
 
     class Meta:
         ordering = ["-created_at", "-updated_at"]
@@ -178,3 +182,19 @@ class ReportArticle(models.Model):
 
     class Meta:
         ordering = ['-reported_at']
+class Ratings(models.Model):
+    """This class enables authenticated users to rate articles on a scale of 1 to 5
+    and average ratings to be returned for every article. It also allows authenticated
+     users to re-rate articles."""
+
+    """We need the slug of the article that is going to be rated
+       since it is unique.
+    """
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    """user_id of the person who rates the article has to be stored"""
+    user_id = models.IntegerField()
+
+    """this column takes the rating/score given by a user for an article."""
+    rating = models.IntegerField()
+
