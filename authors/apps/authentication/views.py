@@ -1,7 +1,9 @@
-from .serializers import (
-    LoginSerializer, RegistrationSerializer, UserSerializer
-)
 from .renderers import UserJSONRenderer
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_bytes, force_text
+from django.contrib.sites.shortcuts import get_current_site
+
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,24 +13,29 @@ from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer
 )
-from authors.apps.profiles.models import Profile
+from ..profiles.models import Profile
+from .renderers import UserJSONRenderer
+
 from .models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import (
-    urlsafe_base64_decode, urlsafe_base64_encode, force_bytes,
-)
+from django.utils.http import force_bytes
 from django.contrib.auth.hashers import make_password
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer,
     PasswordResetSerializer, PasswordResetConfirmSerializer
 )
 from django.contrib.sites.shortcuts import get_current_site
-from authors.apps.profiles.models import Profile
 
 from django.core.mail import send_mail
 from django.conf import settings
 from datetime import timedelta
 from django.core.signing import TimestampSigner
+
+from .models import User
+from .renderers import UserJSONRenderer
+from .serializers import (
+    LoginSerializer, RegistrationSerializer, UserSerializer
+)
+
 
 class RegistrationAPIView(GenericAPIView):
     # Allow any user (authenticated or not) to hit this endpoint.
@@ -36,7 +43,7 @@ class RegistrationAPIView(GenericAPIView):
     renderer_classes = (UserJSONRenderer,)
     serializer_class = RegistrationSerializer
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         user = request.data.get('user', {})
 
         # The create serializer, validate serializer, save serializer pattern
@@ -45,8 +52,41 @@ class RegistrationAPIView(GenericAPIView):
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        address = serializer.data['email']
+        user = User.objects.filter(email=user['email']).first()
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        RegistrationAPIView.generate_activation_link(user, request)
+        return Response({"message": "A verification email has been sent to {}".format(
+            address)}, status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def generate_activation_link(user, request=None, send=True):
+        """
+        This method creates a custom actvation link that will be used when verifying
+        a user's email containing a token and a unique id. The generated token bares the user's identity
+        and the unique id is just an encoded byte string of the user's username
+
+        """
+        token = default_token_generator.make_token(user)
+        uidb64 = urlsafe_base64_encode(
+            force_bytes(user.username)).decode()
+        domain = 'https://{}'.format(get_current_site(request))
+        subject = 'Author\'s Heaven account email verification'
+        route = "api/activate"
+        url = "{}/{}/{}/{}/".format(domain, route, token, uidb64)
+        message = 'Please follow the following link to activate your account \n {}'.format(
+            url)
+        from_email = settings.EMAIL_HOST_USER
+        to_list = [user.email]
+        if send:
+            send_mail(
+                subject=subject,
+                from_email=from_email,
+                recipient_list=to_list,
+                message=message,
+                fail_silently=False)
+                                    
+        return token, uidb64
 
 
 class LoginAPIView(GenericAPIView):
@@ -176,3 +216,28 @@ class PasswordResetConfirmView(RetrieveUpdateAPIView):
                 ]
             }
         }, status=status.HTTP_400_BAD_REQUEST)
+
+class VerifyAccount(GenericAPIView):
+
+    def get(self, request, token, uidb64):
+        """
+        Here, I am verifying both the token and encoded byte string embeded in the activation link
+        by checking the token against the bearer username and also the encoded byte string
+
+        """
+        username = force_text(urlsafe_base64_decode(uidb64))
+
+        user = User.objects.filter(username=username).first()
+        validate_token = default_token_generator.check_token(user, token)
+
+        data = {"message": "Your account has been verified, You can login now!"}
+        stat = status.HTTP_200_OK
+
+        if not validate_token:
+            data['message'] = "Your activation link is Invalid or has expired."
+            stat = status.HTTP_400_BAD_REQUEST
+        else:
+            user.is_verified = True
+            user.save()
+
+        return Response(data, status=stat)

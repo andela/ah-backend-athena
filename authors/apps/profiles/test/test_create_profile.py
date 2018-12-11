@@ -1,8 +1,10 @@
 import json
 from django.urls import reverse
 from rest_framework.views import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase, APIClient, APIRequestFactory
 from ..models import Profile
+from ...authentication.models import User
+from ...authentication.views import VerifyAccount, RegistrationAPIView
 
 
 class TestProfileCreate(APITestCase):
@@ -16,9 +18,26 @@ class TestProfileCreate(APITestCase):
                 'password': 'sokosoko'
             }
         }
+    def verify_account(self, token, uidb64):
+        request = APIRequestFactory().get(
+            reverse(
+                "activate_account",
+                kwargs={
+                    "token": token,
+                    "uidb64": uidb64}))
+        verify_account = VerifyAccount.as_view()
+        response = verify_account(request, token=token, uidb64=uidb64)
+        return response
 
     def create_testing_user(self):
         self.client.post('/api/users/', self.user, format='json')
+        request = APIRequestFactory().post(
+            reverse("registration")
+        )
+        user = User.objects.get()
+        token, uidb64 = RegistrationAPIView.generate_activation_link(
+            user, request, send=False)
+        self.verify_account(token, uidb64)
         response = self.client.post(
             '/api/users/login/', self.user, format='json')
         token = response.data['token']
