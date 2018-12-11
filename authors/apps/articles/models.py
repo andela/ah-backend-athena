@@ -32,7 +32,8 @@ class Article(models.Model):
 
     """. The slug field makes the article searchable it can be 
     auto generated or specified by the author."""
-    slug = models.SlugField(db_index=True, max_length=255, unique=True)
+    slug = models.SlugField(
+        db_index=True, max_length=255, unique=True, blank=False)
 
     """
     Published is like a draft field, helps authors to wor
@@ -50,7 +51,7 @@ class Article(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.tittle
+        return self.title
 
     class Meta:
         ordering = ["-created_at", "-updated_at"]

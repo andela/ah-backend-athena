@@ -1,0 +1,77 @@
+def put(self, request, *args, **kwargs):
+        serializer_class = CreateArticleViewSerializer
+        """
+            This methode updates an article
+        """
+        article = request.data.get('article', {})
+        # user_data = JWTAuthentication().authenticate(request)
+
+        current_user = User.objects.get(email=request.user)
+        profile = Profile.objects.get(user__id=current_user.id)
+
+        # # image_data = article['image']
+        # image_id = article['image']
+
+        # image_obj = ArticleImg(
+        #     image_url=image_data['image_url'],
+        #     description=image_data['image_description']
+        # )
+
+        # image_obj._do_update(id)
+        """ Create a new slug id from the title"""
+        try:
+            slug = slugify(article["title"]).replace("_", "-")
+            slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
+            article["slug"] = slug
+        except KeyError:
+            pass
+
+        serializer = serializer_class(data=article)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.update_article(article_id, article, user_data[1])
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+# def get(self, request):
+
+    #     permission_classes = (AllowAny,)
+    #     renderer_classes = (ArticleJSONRenderer,)
+    #     serializer_class = CreateArticleViewSerializer
+
+    #     # queryset = Article.objects.filter(published=True)
+
+    #     queryset = Article.objects.all()
+    #     if not queryset:
+    #         error = {"error": "There are no articles"}
+    #         return Response(error, status=status.HTTP_404_NOT_FOUND)
+
+    #     data = []
+
+    #     article = queryset.__dict__
+    #     print(queryset.__dict__)
+    #     for article_ in article:
+    #         image_ = ArticleImg.objects.get(id=article.image_id)
+    #         author_ = Profile.objects.get(id=author_id)
+
+    #         image = {
+    #             'id': image.image_id,
+    #             'image_url': image_.image_url,
+    #             'description': image_.description
+    #         }
+    #         article_['image'] = image
+    #         author = {
+    #             "username": author_.username,
+    #             "bio": author_.bio,
+    #             "image": author_.image,
+    #             "email": author_.email
+
+    #         }
+    #         article_['author'] = author
+
+    #         data.append[article_]
+    #     print(data)
+    #     return Response({"articles": data}, status=status.HTTP_200_OK)
+
