@@ -1,3 +1,11 @@
+from .serializers import (
+    LoginSerializer,
+    RegistrationSerializer,
+    UserSerializer,
+    GoogleAuthSerializer,
+    FacebookAuthSerializer,
+    TwitterAuthSerializer,
+)
 from .renderers import UserJSONRenderer
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -99,6 +107,45 @@ class LoginAPIView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GoogleAuthAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = GoogleAuthSerializer
+
+    def post(self, request):
+        token = request.data.get('token', {})
+        serializer = self.serializer_class(data={'auth_token': token})
+        serializer.is_valid(raise_exception=True)
+        res = {"jwt_token": serializer.data['auth_token']}
+        return Response(res, status=status.HTTP_200_OK)
+
+
+class FacebookAuthAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = FacebookAuthSerializer
+
+    def post(self, request):
+        token = request.data.get('token', {})
+        serializer = self.serializer_class(data={'auth_token': token})
+        serializer.is_valid(raise_exception=True)
+        res = {"jwt_token": serializer.data['auth_token']}
+        return Response(res, status=status.HTTP_200_OK)
+
+
+class TwitterAuthAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = TwitterAuthSerializer
+
+    def post(self, request):
+        token = request.data.get('token', {})
+        serializer = self.serializer_class(data={'auth_token': token})
+        serializer.is_valid(raise_exception=True)
+        res = {"jwt_token": serializer.data['auth_token']}
+        return Response(res, status=status.HTTP_200_OK)
 
 
 class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
