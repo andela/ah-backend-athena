@@ -39,11 +39,10 @@ from .models import(
     Favourites,
     Likes,
     Readings,
-    ReportArticle
+    ReportArticle,
+    Ratings
 )
-
 from ..profiles.models import Profile
-
 
 from .serializers import(
     CreateArticleViewSerializer,
@@ -54,10 +53,12 @@ from .serializers import(
     LikeArticleViewSerializer,
     ReadingSerializer,
     BookmarkSerializers,
-    ReportArticleSerializer
+    ReportArticleSerializer,
+    RatingSerializer
 
 )
-
+from .utils import Averages
+avg = Averages()
 
 class CreateArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -71,7 +72,6 @@ class CreateArticleView(GenericAPIView):
         call the JWTAuthentication class to decode token
         and retrieve usere data
         """
-
         image_data = article.pop('images')
 
         slug = slugify(article["title"]).replace("_", "-")
@@ -386,7 +386,6 @@ class FavouritesView(GenericAPIView):
             }
         }, status=200)
 
-
 class LikeArticleView(GenericAPIView):
     def post(self, request, slug):
         user_id = JWTAuthentication().authenticate(request)[0].id
@@ -639,3 +638,38 @@ class ReportedArticleListAPIView(GenericAPIView):
         
 
 
+class RateArticle(GenericAPIView):
+    def post(self, request, slug):
+        user_id = JWTAuthentication().authenticate(request)
+
+        ratings = request.data["rating"]
+        
+        article_id = Article.objects.get(slug=slug)
+        
+        rated = {
+            "user_id": user_id[0].id,
+            "article": article_id.id,
+            "rating": ratings
+        }
+        score = [1,2,3,4,5]
+        if rated["rating"] not in score:
+            return Response({"error":"Please input a value between 1 to 5"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_exists = avg.check_if_user_exists(rated["user_id"], rated["article"])
+        
+        if len(user_exists) >= 1:
+            serializer = RatingSerializer(data=rated)
+            serializer.is_valid(raise_exception=True)
+            avg.re_rate_articles(rated["article"], rated["rating"])
+            a = avg.query_ratings_table(rated["article"])
+            avg.update_avg_articles_table(rated["article"], a["avg_rating"])
+            return Response(rated, status=status.HTTP_201_CREATED)
+
+        else:
+            serializer = RatingSerializer(data=rated)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            a = avg.query_ratings_table(rated["article"])
+            avg.update_avg_articles_table(rated["article"], a["avg_rating"])
+        
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
