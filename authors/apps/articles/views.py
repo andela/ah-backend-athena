@@ -7,6 +7,8 @@ from rest_framework.generics import(
     RetrieveUpdateAPIView,
     GenericAPIView,
     ListAPIView,
+    CreateAPIView,
+    RetrieveUpdateAPIView
 )
 
 from rest_framework.permissions import (
@@ -38,6 +40,16 @@ class CreateArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = CreateArticleViewSerializer
+    CreateArticalViewSerializer,
+
+
+)
+
+
+class createArticalView(RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    # renderer_classes= (Someserializer,) Customize serializer for this app
+    serializer_class = (CreateArticalViewSerializer,)
 
     def post(self, request):
         """ The post method is used to create articles"""
@@ -53,6 +65,7 @@ class CreateArticleView(GenericAPIView):
             image_url=image_data['image_url'],
             description=image_data['image_description']
         )
+
         image_obj.save()
         image_instance = ArticleImg.objects.filter(
             image_url=image_data['image_url'],
