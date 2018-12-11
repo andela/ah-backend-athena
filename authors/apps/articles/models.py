@@ -62,6 +62,12 @@ class Article(models.Model):
 
     objects = models.Manager()
 
+<<<<<<< HEAD
+=======
+    def __str__(self):
+        return self.title
+
+>>>>>>> feat(articals): Users can create articles
     class Meta:
         ordering = ["-created_at", "-updated_at"]
 

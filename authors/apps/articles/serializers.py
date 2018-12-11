@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework import status, exceptions
 from ..authentication.models import User
 from ..profiles.serializers import ProfileSerializer
+
 from .relations import TagField
 
 from .models import(
@@ -10,6 +11,7 @@ from .models import(
     ArticleImg,
     Tag,
     Favourites,
+    
 )
 
 
@@ -20,6 +22,7 @@ class ArticleImgSerializer(serializers.ModelSerializer):
         fields = ['id', 'image_url', 'description']
 
 
+
 class CreateArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
     image = ArticleImgSerializer(read_only=True)
@@ -28,21 +31,16 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     """
-    tagList = TagField(many=True, required=False, source='tags')
-
     class Meta:
         model = Article
         """
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['id', 'title', 'body', 'description', 'image','tagList',
-         'author', 'slug', 'published', 'created_at', 'updated_at']
+        fields = ['id', 'title', 'body', 'description', 'image',
+                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
-        """
-        Overide the validate methods to include validatiosn for 
-        different fields
-        """
+
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
         article = Article.objects.create(**validated_data)
@@ -81,7 +79,6 @@ class UpdateArticleViewSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'body', 'description', 'image',
                   'author', 'slug', 'published', ' updated_at', ' updated_at']
 
-    
 
 class TagsSerializer(serializers.ModelSerializer):
     article = serializers.SerializerMethodField()
@@ -103,3 +100,5 @@ class FavouriteSerializer(serializers.ModelSerializer):
         fields = [
             'article', 'favourite', 'profile'
         ]
+
+        
