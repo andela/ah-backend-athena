@@ -1,6 +1,10 @@
 from .base import BaseTestArticles
 from rest_framework.views import status
+<<<<<<< HEAD
 from ..models import Article, Tag
+=======
+from ..models import Article
+>>>>>>> feat(articles) user can favorite article
 
 
 class TestArticles(BaseTestArticles):
@@ -61,6 +65,10 @@ class TestArticles(BaseTestArticles):
     def test_non_existing_article(self):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
+<<<<<<< HEAD
+=======
+        fake_slug = "ed"*23
+>>>>>>> feat(articles) user can favorite article
         response = self.client.put(
             '/api/articles/ffhfh-ggrg/', data=self.updated_article, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -81,6 +89,7 @@ class TestArticles(BaseTestArticles):
         response = self.client.get(
             '/api/articles',  format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+<<<<<<< HEAD
 
     def test_get_article_tags(self):
         self.client.credentials(
@@ -109,3 +118,5 @@ class TestArticles(BaseTestArticles):
 
 
 
+=======
+>>>>>>> feat(articles) user can favorite article
