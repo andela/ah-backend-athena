@@ -12,9 +12,13 @@ from .relations import TagField
 from .models import(
     Article,
     ArticleImg,
+<<<<<<< HEAD
     Tag,
     Favourites,
     
+=======
+     Tag, Likes
+>>>>>>> feat(like_dislike): impliment like article and links to the endpoint
 )
 
 

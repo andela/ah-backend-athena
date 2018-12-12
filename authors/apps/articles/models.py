@@ -59,12 +59,12 @@ class Article(models.Model):
     """
     favourited = models.BooleanField(default=False)
     favouriteCount = models.IntegerField(default=0)
+    likes_count = models.IntegerField(default=0)
 
     objects = models.Manager()
 
     class Meta:
         ordering = ["-created_at", "-updated_at"]
-
 
 class Tag(models.Model):
     tag = models.CharField(max_length=255)

@@ -22,15 +22,33 @@ from django.template.defaultfilters import slugify
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
+<<<<<<< HEAD
 from .models import ArticleImg, Article, Tag, Favourites
+=======
+<<<<<<< HEAD
+from .models import ArticleImg, Article, Tag
+=======
+from .models import ArticleImg, Article, Likes
+>>>>>>> feat(like_dislike): impliment like article and links to the endpoint
+>>>>>>> feat(like_dislike): impliment like article and links to the endpoint
 from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
-    UpdateArticleViewSerializer,
     ArticleImgSerializer,
+<<<<<<< HEAD
     TagsSerializer,
     FavouriteSerializer,
+=======
+<<<<<<< HEAD
+    TagsSerializer
+=======
+    UpdateArticleViewSerializer, LikeArticleViewSerializer
+
+)
+>>>>>>> feat(like_dislike): impliment like article and links to the endpoint
+
+>>>>>>> feat(like_dislike): impliment like article and links to the endpoint
 )
 
 class CreateArticleView(GenericAPIView):
@@ -171,6 +189,7 @@ class RetrieveArticlesAPIView(GenericAPIView):
             article_list.append(CreateArticleViewSerializer(art).data)
         return Response(article_list, status=status.HTTP_200_OK)
 
+<<<<<<< HEAD
 class ArticleTagsAPIView(GenericAPIView):
     queryset = Tag.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -204,6 +223,7 @@ class ArticleDeleteAPIView(GenericAPIView):
         output = TagsSerializer(article)
         return Response(output.data)
 
+<<<<<<< HEAD
     
 class FavouritesView(GenericAPIView):
     serializer_class = FavouriteSerializer
@@ -305,3 +325,41 @@ class FavouritesView(GenericAPIView):
         
 
         
+=======
+=======
+
+class LikeArticleView(GenericAPIView):
+    def post(self, request):
+        user_id = JWTAuthentication().authenticate(request)
+        
+        rated = {
+            "user_id": user_id[0].id,
+            "article_id": request.data["article_id"],
+            "like":True
+        }
+        print(user_id[0])
+        current_user = User.objects.all().filter(
+            email=request.user).first()
+
+        current_article = Article.objects.all().filter(
+            id=1).first()
+        user_like_options = Likes.objects.filter(user_id=rated["user_id"]).filter(article_id=rated["article_id"])
+        
+        if len(user_like_options) >= 1:
+            user_like_option = user_like_options.first()
+            if not user_like_option.like:
+                current_article.likes_count = current_article.likes_count + 1
+                current_article.save()
+            user_like_option.like = True
+            user_like_option.save()
+            return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
+        else:
+            current_article.likes_count = current_article.likes_count + 1
+            current_article.save()
+            serializer = LikeArticleViewSerializer(data=rated)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(article=current_article, user= current_user)
+        
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+>>>>>>> feat(like_dislike): impliment like article and links to the endpoint
+>>>>>>> feat(like_dislike): impliment like article and links to the endpoint
