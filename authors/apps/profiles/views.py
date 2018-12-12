@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .models import Profile
-from authors.apps.authentication.models import User
+from ..authentication.models import User
 import json
 
 from rest_framework import status

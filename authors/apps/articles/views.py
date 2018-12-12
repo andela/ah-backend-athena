@@ -1,6 +1,7 @@
 
 import uuid
 from django.shortcuts import render
+from rest_framework import generics, mixins, status, viewsets
 from rest_framework import status, exceptions
 from rest_framework.generics import(
     RetrieveUpdateAPIView,
@@ -8,7 +9,11 @@ from rest_framework.generics import(
     ListAPIView,
 )
 
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+       )
 from rest_framework.response import Response
 from rest_framework import exceptions
 from django.template.defaultfilters import slugify
@@ -16,17 +21,20 @@ from django.template.defaultfilters import slugify
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article
+from .models import ArticleImg, Article, Tag
 from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
     UpdateArticleViewSerializer,
     ArticleImgSerializer,
+    TagsSerializer
+
 )
 
-
 class CreateArticleView(GenericAPIView):
+        
+    queryset = Article.objects.select_related('author', 'author__user')
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = CreateArticleViewSerializer
@@ -38,7 +46,7 @@ class CreateArticleView(GenericAPIView):
         call the JWTAuthentication class to decode token
         and retrieve usere data
         """
-
+        
         image_data = article['image']
 
         image_obj = ArticleImg(
@@ -67,6 +75,7 @@ class CreateArticleView(GenericAPIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
     def get(self, request, slug):
         """
          This class method is used retrieve article by id
@@ -84,7 +93,7 @@ class CreateArticleView(GenericAPIView):
 
     def delete(self, request, slug):
         """
-        This methode deletes a user artical
+        This method deletes a user artical
         """
         user_data = JWTAuthentication().authenticate(request)
         profile = Profile.objects.get(user__id=user_data[0].id)
@@ -160,3 +169,37 @@ class RetrieveArticlesAPIView(GenericAPIView):
         for art in list(article):
             article_list.append(CreateArticleViewSerializer(art).data)
         return Response(article_list, status=status.HTTP_200_OK)
+
+class ArticleTagsAPIView(GenericAPIView):
+    queryset = Tag.objects.all()
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def get(self, request, *args, **kwargs):
+        slug = kwargs['slug']
+        article = Article.objects.filter(
+                slug=slug
+            ).first()
+        serializer = CreateArticleViewSerializer(article).data
+        tags = serializer["tagList"]
+        return Response({
+            'tags': tags
+        }, status=status.HTTP_200_OK)
+
+class ArticleDeleteAPIView(GenericAPIView):
+
+    def delete(self, request, *args, **kwargs):
+        slug = kwargs['slug']
+        tag = kwargs['tag']
+        article = Article.objects.filter(
+                slug=slug
+            ).first()
+        serializer = CreateArticleViewSerializer(article).data
+        tags = serializer["tagList"]
+        for each in tags:
+                one = Tag.objects.get(tag=tag)
+                if one:
+                    article.tags.remove(one)
+
+        output = TagsSerializer(article)
+        return Response(output.data)
+

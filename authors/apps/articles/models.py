@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from ..authentication.models import User
 from ..profiles.models import Profile
 from django.db import models
-
+from django.template.defaultfilters import slugify
 
 class ArticleImg(models.Model):
     image_url = models.URLField(blank=True, null=True)
@@ -40,18 +40,26 @@ class Article(models.Model):
     and save them to draft before publishing them
     """
     published = models.BooleanField(default=False)
+    """
+    An article can have many tags and the reverse is true
+    """
+
+    tags = models.ManyToManyField('articles.Tag', related_name='articles')
 
     """
     created at and updated at fiedls track the authors
     edit history of the article
     """
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
 
-    def __str__(self):
-        return self.title
-
     class Meta:
         ordering = ["-created_at", "-updated_at"]
+
+class Tag(models.Model):
+    tag = models.CharField(max_length=255)
+    slug = models.SlugField(db_index=True, unique=True)
+    
