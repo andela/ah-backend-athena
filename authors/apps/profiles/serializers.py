@@ -3,7 +3,6 @@ from rest_framework import serializers
 from .models import Profile
 
 
-
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
     email = serializers.CharField(source='user.email')
@@ -12,7 +11,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ('username', 'bio', 'image','email')
+        fields = ('username', 'bio', 'image', 'email')
         read_only_fields = ('username',)
 
     def get_image(self, obj):
@@ -20,5 +19,3 @@ class ProfileSerializer(serializers.ModelSerializer):
             return obj.image
 
         return ''
-
-

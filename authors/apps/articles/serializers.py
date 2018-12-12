@@ -9,26 +9,10 @@ from .models import(
 
 
 class CreateArticleViewSerializer(serializers.ModelSerializer):
-    # author = serializers.SerializerMethodField()
     author = ProfileSerializer(read_only=True)
-
-    # user_id = User.pk
-
-    # def get_author(self, article):
-    #     print('%%%%%%%%%%%%%%%%%', article.author)
-    #     # current_user = User.objects.all().filter(
-    #     #     email=request.user).values()[0]
-    #     # user_id = current_user.id
-    #     # profile = Profile.objects.get(user__id=user_id)
-    #     # profile.bio = bio
-    #     # profile.image = image
-    #     # print("&&&&&&&&&&&&", self.user_id)
-    #     # user = {
-    #     #     "username": article.author.username,
-    #     #     "bio": profile.bio,
-    #     #     "image": profile.image
-    #     # }
-    #     return article
+    # slug = serializers.SlugField(read_only=True)
+    # created_at = serializers.DateTimeField(read_only=True)
+    # updated_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Article
@@ -37,7 +21,7 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         or response, this includes fields specified explicitly above.
         """
         fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', 'created_at']
+                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
         """
         Overide the validate methods to include validatiosn for 
@@ -51,7 +35,43 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
                 )
 
         def validate_description(self, description):
+            if len(description) > 400:
+                raise serializers.ValidationError(
+                    'Titles are restricted to 200 characters'
+                )
+
+
+class UpdateArticleViewSerializer(serializers.ModelSerializer):
+    author = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = Article
+        """
+        List the fields as in create articals serializer
+        """
+        fields = ['id', 'title', 'body', 'description', 'image',
+                  'author', 'slug', 'published', ' updated_at', ' updated_at']
+
+        """
+        Overide methods as in create artical serializer
+        """
+
+        def validate_title(self, title):
+            if len(title) > 200:
+                raise serializers.ValidationError(
+                    'Titles are restricted to 200 characters'
+                )
+
+        def validate_description(self, description):
             if len(title) > 400:
                 raise serializers.ValidationError(
                     'Titles are restricted to 200 characters'
+                )
+
+        def update_article(self, article_id, data, user_id):
+            try:
+                article_obj = Article.objects.filter(pk=article_id)
+            except:
+                raise serializers.ValidationError(
+                    'This artical doesnot exist'
                 )
