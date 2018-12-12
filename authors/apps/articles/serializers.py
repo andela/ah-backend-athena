@@ -65,11 +65,13 @@ class RepliesSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
 
     replies = RepliesSerializer(many=True, read_only=True)
+    print(replies)
     def to_representation(self, instance):
         response = super().to_representation(instance)
-        profile = Profile.objects.all().filter(user=3).values()[0]
+        profile = Profile.objects.all().filter(user=instance.author).values()[0]
+        reply= Replies.objects.all().values()
         response['author'] = profile
-        print("################", self.replies)
+        response['replies'] = reply
         return response
 
     class Meta:
