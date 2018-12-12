@@ -12,12 +12,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import exceptions
 from django.template.defaultfilters import slugify
+from django.http import Http404
 
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
-from .renderers import ArticleJSONRenderer
-from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Comment
+from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer, CommentJSONRenderer
+from .models import ArticleImg, Article, Comment, Replies
 from ..profiles.models import Profile
 
 from .serializers import(
@@ -99,7 +99,6 @@ class CreateArticleView(GenericAPIView):
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
         serializer.save(author=profile, image=image_instance)
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get(self, request, slug):
@@ -211,6 +210,7 @@ class RetrieveArticlesAPIView(GenericAPIView):
         return Response(article_list, status=status.HTTP_200_OK)
         serializer.save(author= user_data[0])
         data = serializer.data
+        
         data["message"] = "Article created successfully."
 
 

@@ -4,6 +4,7 @@ from rest_framework import status, exceptions
 from ..authentication.models import User
 from ..profiles.serializers import ProfileSerializer
 from ..articles.models import  Comment, Replies, Profile
+from ..profiles.models import Profile
 
 from .models import(
     Article,
@@ -46,6 +47,34 @@ class ArticleImgSerializer(serializers.ModelSerializer):
     class Meta:
         model = ArticleImg
         fields = ['id', 'image_url', 'description']
+class RepliesSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Replies
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        resp = super().to_representation(instance)
+        profile = Profile.objects.all().filter(user=3).values()[0]
+        comment= Comment.objects.all().filter(id=6).values()[0]
+        resp['comment'] = comment
+        resp['author'] = profile
+        print("#############44444444", resp)
+        return resp
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    replies = RepliesSerializer(many=True, read_only=True)
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        profile = Profile.objects.all().filter(user=3).values()[0]
+        response['author'] = profile
+        print("################", self.replies)
+        return response
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'comment_body', 'created_at', 'article', 'author', 'replies')
 
 
 class CreateArticleViewSerializer(serializers.ModelSerializer):
@@ -63,7 +92,7 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         or response, this includes fields specified explicitly above.
         """
         fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
+                  'author', 'slug', 'published', 'created_at', 'updated_at', 'comment' ]
 
 
 class UpdateArticleViewSerializer(serializers.ModelSerializer):
