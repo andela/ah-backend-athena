@@ -331,13 +331,17 @@ class FavouritesView(GenericAPIView):
 class LikeArticleView(GenericAPIView):
     def post(self, request, slug):
         user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
 
-        current_user = User.objects.all().filter(
-            email=request.user).first()
-
-        current_article = Article.objects.all().filter(
-            id=1).first()
-        user_like_options = Likes.objects.filter(user_id=user_id).filter(article__slug=slug)
+        try:
+            current_article = Article.objects.get(
+            slug=slug)
+        except Article.DoesNotExist:
+            raise exceptions.NotFound(
+                'This artical doesnot exist'
+            )
+        
+        user_like_options = Likes.objects.filter(profile=profile).filter(article__slug=slug)
         
         if len(user_like_options) >= 1:
             user_like_option = user_like_options.first()
@@ -352,20 +356,24 @@ class LikeArticleView(GenericAPIView):
             current_article.save()
             serializer = LikeArticleViewSerializer(data={ "like":True })
             serializer.is_valid(raise_exception=True)
-            serializer.save(article=current_article, user= current_user)
+            serializer.save(article=current_article, profile= profile)
         
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     
     def delete(self, request, slug):
         user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
 
-        current_user = User.objects.all().filter(
-            email=request.user).first()
+        try:
+            current_article = Article.objects.get(
+            slug=slug)
+        except Article.DoesNotExist:
+            raise exceptions.NotFound(
+                'This artical doesnot exist'
+            )
 
-        current_article = Article.objects.all().filter(
-            id=1).first()
-        user_like_options = Likes.objects.filter(user_id=user_id).filter(article__slug=slug)
+        user_like_options = Likes.objects.filter(profile=profile).filter(article__slug=slug)
         
         if len(user_like_options) >= 1:
 
@@ -381,7 +389,7 @@ class LikeArticleView(GenericAPIView):
             current_article.save()
             serializer = LikeArticleViewSerializer(data={ "like":True })
             serializer.is_valid(raise_exception=True)
-            serializer.save(article=current_article, user= current_user)
+            serializer.save(article=current_article, profile= profile)
         
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 >>>>>>> feat(like_dislike): impliment like article and links to the endpoint
