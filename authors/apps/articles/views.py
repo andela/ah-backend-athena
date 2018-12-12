@@ -329,21 +329,15 @@ class FavouritesView(GenericAPIView):
 =======
 
 class LikeArticleView(GenericAPIView):
-    def post(self, request):
-        user_id = JWTAuthentication().authenticate(request)
-        
-        rated = {
-            "user_id": user_id[0].id,
-            "article_id": request.data["article_id"],
-            "like":True
-        }
-        print(user_id[0])
+    def post(self, request, slug):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+
         current_user = User.objects.all().filter(
             email=request.user).first()
 
         current_article = Article.objects.all().filter(
             id=1).first()
-        user_like_options = Likes.objects.filter(user_id=rated["user_id"]).filter(article_id=rated["article_id"])
+        user_like_options = Likes.objects.filter(user_id=user_id).filter(article__slug=slug)
         
         if len(user_like_options) >= 1:
             user_like_option = user_like_options.first()
@@ -356,7 +350,36 @@ class LikeArticleView(GenericAPIView):
         else:
             current_article.likes_count = current_article.likes_count + 1
             current_article.save()
-            serializer = LikeArticleViewSerializer(data=rated)
+            serializer = LikeArticleViewSerializer(data={ "like":True })
+            serializer.is_valid(raise_exception=True)
+            serializer.save(article=current_article, user= current_user)
+        
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    
+    def delete(self, request, slug):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+
+        current_user = User.objects.all().filter(
+            email=request.user).first()
+
+        current_article = Article.objects.all().filter(
+            id=1).first()
+        user_like_options = Likes.objects.filter(user_id=user_id).filter(article__slug=slug)
+        
+        if len(user_like_options) >= 1:
+
+            user_like_option = user_like_options.first()
+            if user_like_option.like and current_article.likes_count > 0:
+                current_article.likes_count = current_article.likes_count - 1
+                current_article.save()
+            user_like_option.like = False
+            user_like_option.save()
+            return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
+        else:
+            current_article.likes_count = current_article.likes_count - 1
+            current_article.save()
+            serializer = LikeArticleViewSerializer(data={ "like":True })
             serializer.is_valid(raise_exception=True)
             serializer.save(article=current_article, user= current_user)
         
