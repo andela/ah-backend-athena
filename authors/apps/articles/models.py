@@ -65,6 +65,7 @@ class Article(models.Model):
     class Meta:
         ordering = ["-created_at", "-updated_at"]
 
+
 class Tag(models.Model):
     tag = models.CharField(max_length=255)
     slug = models.SlugField(db_index=True, unique=True)
@@ -114,3 +115,14 @@ class Comments(models.Model):
             return False
         return True
     
+        
+class Likes(models.Model):
+   """ """
+
+   """ """
+   article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+   """ """
+   user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+   """ """
+   like = models.BooleanField()
