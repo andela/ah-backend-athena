@@ -387,7 +387,7 @@ class LikeArticleView(GenericAPIView):
         else:
             current_article.likes_count = current_article.likes_count - 1
             current_article.save()
-            serializer = LikeArticleViewSerializer(data={ "like":True })
+            serializer = LikeArticleViewSerializer(data={ "like":False })
             serializer.is_valid(raise_exception=True)
             serializer.save(article=current_article, profile= profile)
         
