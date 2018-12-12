@@ -47,6 +47,7 @@ class Article(models.Model):
     """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
 
     objects = models.Manager()
 
