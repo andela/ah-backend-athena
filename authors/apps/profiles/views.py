@@ -20,7 +20,7 @@ class ProfileRetrieveView(RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         username = self.kwargs['slug']
-        
+
         try:
             profile = Profile.objects.select_related('user').get(
                 user__username=username
@@ -31,4 +31,3 @@ class ProfileRetrieveView(RetrieveAPIView):
         serializer = self.serializer_class(profile)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-    

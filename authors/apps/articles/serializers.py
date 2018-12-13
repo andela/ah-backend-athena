@@ -1,19 +1,30 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
+from rest_framework import status, exceptions
 from ..authentication.models import User
 from ..profiles.serializers import ProfileSerializer
 
 from .models import(
     Article,
+    ArticleImg
 )
+
+
+class ArticleImgSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ArticleImg
+        fields = ['id', 'image_url', 'description']
 
 
 class CreateArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
-    # slug = serializers.SlugField(read_only=True)
-    # created_at = serializers.DateTimeField(read_only=True)
-    # updated_at = serializers.DateTimeField(read_only=True)
-
+    image = ArticleImgSerializer(read_only=True)
+    """
+    slug = serializers.SlugField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+    """
     class Meta:
         model = Article
         """
@@ -23,10 +34,18 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'body', 'description', 'image',
                   'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
+
+class UpdateArticleViewSerializer(serializers.ModelSerializer):
+    author = ProfileSerializer(read_only=True)
+    image = ArticleImgSerializer(read_only=False)
+
+    class Meta:
+        model = Article
         """
-        Overide the validate methods to include validatiosn for 
-        different fields
+        List the fields as in create articals serializer
         """
+        fields = ['id', 'title', 'body', 'description', 'image',
+                  'author', 'slug', 'published', ' updated_at', ' updated_at']
 
         def validate_title(self, title):
             if len(title) > 200:
@@ -75,3 +94,4 @@ class UpdateArticleViewSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'This artical doesnot exist'
                 )
+

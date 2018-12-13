@@ -10,6 +10,7 @@ from rest_framework.generics import(
 
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import exceptions
 from django.template.defaultfilters import slugify
 
 from ..authentication.backends import JWTAuthentication
@@ -21,9 +22,8 @@ from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
-
     UpdateArticleViewSerializer,
-
+    ArticleImgSerializer,
 )
 
 
@@ -66,9 +66,31 @@ class CreateArticleView(GenericAPIView):
         user_id = current_user['id']
         profile = Profile.objects.get(user__id=user_id)
 
+        image_data = article['image']
+
+        image_obj = ArticleImg(
+            image_url=image_data['image_url'],
+            description=image_data['image_description']
+        )
+        image_obj.save()
+        image_instance = ArticleImg.objects.filter(
+            image_url=image_data['image_url'],
+            description=image_data['image_description']
+        ).first()
+
+        slug = slugify(article["title"]).replace("_", "-")
+        slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
+        article["slug"] = slug
+
+        current_user = User.objects.all().filter(
+            email=request.user).values()[0]
+        user_id = current_user['id']
+        profile = Profile.objects.get(user__id=user_id)
+
+        article.pop('image')
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
-        serializer.save(author=profile)
+        serializer.save(author=profile, image=image_instance)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -76,12 +98,10 @@ class CreateArticleView(GenericAPIView):
         """
          This class method is used retrieve article by id
         """
-        print(slug)
-        try:
-            article = Article.objects.filter(
-                slug=slug
-            ).first()
-        except Article.DoesNotExist:
+        article = Article.objects.filter(
+            slug=slug
+        ).first()
+        if not article:
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
 
@@ -112,6 +132,46 @@ class CreateArticleView(GenericAPIView):
         data = {"message": "article was deleted successully"}
         return Response(data, status=status.HTTP_200_OK)
 
+    def put(self, request, slug):
+        serializer_class = UpdateArticleViewSerializer
+        """
+            This methode updates an article
+        """
+        try:
+            article_obj = Article.objects.get(slug=slug)
+        except Article.DoesNotExist:
+            error = {"error": "This article doesnot exist"}
+            return Response(error, status=status.HTTP_404_NOT_FOUND)
+
+        article = request.data.get('article', {})
+        user_info = JWTAuthentication().authenticate(request)
+        current_user = user_info[0]
+        profile = Profile.objects.get(user__id=current_user.id)
+        image_data = article['image']
+
+        image_obj = ArticleImg(
+            image_url=image_data['image_url'],
+            description=image_data['image_description']
+        )
+        image_obj.save()
+
+        img_id = ArticleImg.objects.filter(
+            image_url=image_data['image_url']).first()
+        article['image'] = img_id.id
+
+        """ Create a new slug id from the title"""
+
+        slug = slugify(article["title"]).replace("_", "-")
+        slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
+        article["slug"] = slug
+
+        serializer = CreateArticleViewSerializer(
+            article_obj, data=article, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(author=profile)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class ListAuthArticlesAPIView(ListAPIView):
 
@@ -126,3 +186,18 @@ class ListAuthArticlesAPIView(ListAPIView):
         if len(articles) == 0:
             raise ArticlesNotExist
         return articles
+
+class RetrieveArticlesAPIView(GenericAPIView):
+
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ListArticlesJSONRenderer,)
+
+    def get(self, request):
+        """
+         This class method is used retrieve articles
+        """
+        article = Article.objects.all()
+        article_list = []
+        for art in list(article):
+            article_list.append(CreateArticleViewSerializer(art).data)
+        return Response(article_list, status=status.HTTP_200_OK)
