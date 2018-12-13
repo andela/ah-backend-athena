@@ -31,7 +31,7 @@ def get_object(obj_class, Id):
     try:
         return obj_class.objects.get(pk=Id)
     except obj_class.DoesNotExist:
-        return Response('object does not exist', Http404)
+        return Response({"message": "object does not exists"}, Http404)
 
 class CreateArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -145,53 +145,106 @@ class CommentView(GenericAPIView):
     # renderer_classes = (CommentJSONRenderer, )
 
     def post(self, request, **kwargs):
-        slug = self.kwargs['slug']
         comment = request.data.get('comment', {})
-        article = Article.objects.get(slug=slug)
-        
-        author = request.user
-        comment['author'] = author.id
-        comment['article'] = article.id
-        serializer = self.serializer_class(data=comment)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=201)
+        try:
+            slug = self.kwargs['slug']
+            article = Article.objects.get(slug=slug)
+            
+            author = request.user
+            comment['author'] = author.id
+            comment['article'] = article.id
+            serializer = self.serializer_class(data=comment)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=201)
+        except:
+            return Response(
+                {"message": "Sorry, article does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, *args, **kwargs):
-        Id = kwargs['id']
-        copy = get_object(Comment, Id)
-        print(copy)
         comment = request.data.get('comment', {})
-        comment['author'] = request.user.id
-        serializer = self.serializer_class(copy, data=comment)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        try:
+            Id = kwargs['id']
+            comment_obj = get_object(Comment, Id)
+            comment['author'] = request.user.id
+            serializer = self.serializer_class(comment_obj, data=comment)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        except:
+            return Response(
+                {
+                    "message":
+                    "Failed to update, comment or article doesnot exist"},
+                    status=status.HTTP_404_NOT_FOUND
+            )
+
 
     def delete(self, request, **kwargs):
-        comment_obj = Comment.objects.get(id=kwargs['id'])
-        todelete = comment_obj
-        if str(comment_obj):
-            todelete.delete()
-        else:
-            return Response("message", "Comment deleted successfully", status=400)
-        return Response(status=status.HTTP_200_OK)
+        try:
+            comment_obj = Comment.objects.get(id=kwargs['id'])
+            comment_obj.delete()
+            return Response(
+                {"message": "Comment deleted successfully"}, status=status.HTTP_200_OK)
+        except:
+            return Response(
+                {"message": "Can not delete, comment does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RepliesView(GenericAPIView):
     permission_classes = (IsAuthenticated, )
     serializer_class = RepliesSerializer
 
-    def post(self, request):
+    def post(self, request, commentId):
         reply = request.data.get('reply', {})
-        comment = Comment.objects.get(id=6)
-        author = request.user
-        reply['author'] = author.id
-        reply['comment'] = comment.id
-        serializer = self.serializer_class(data=reply)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=201)
+        try:
+            comment = Comment.objects.get(id=commentId)
+            author = request.user
+            reply['author'] = author.id
+            reply['comment'] = comment.id
+            serializer = self.serializer_class(data=reply)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=201)
+        except:
+            return Response({"message": "Comment not found"})
+
+    def put(self, request, id):
+        reply = request.data.get('reply', None)
+        try:
+            reply_obj = get_object(Replies, id)
+            author = request.user
+            reply['author'] = author.id
+            serializer = self.serializer_class(reply_obj, data=reply)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=200)
+        except:
+            return Response({
+                "errors":{
+                "body": [
+                "can't update, reply not found"
+                ]
+            }})
+
+    def delete(self, request, id):
+        try:
+            reply_obj = Replies.objects.get(id=id)
+            reply_obj.delete()
+            return Response(
+                {"message": {
+                    "body": ["Reply deleted successfully"]}},
+                    status=status.HTTP_200_OK)
+        except:
+            return Response({
+                "errors":{
+                "body": [
+                "Can't delete, reply does not exist"
+                ]
+            }}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
     
