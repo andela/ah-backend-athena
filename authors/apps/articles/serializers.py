@@ -3,22 +3,13 @@ from rest_framework import serializers
 from rest_framework import status, exceptions
 from ..authentication.models import User
 from ..profiles.serializers import ProfileSerializer
-<<<<<<< HEAD
-
-=======
->>>>>>> feat(like_dislike): add model and serializer classes
 from .relations import TagField
 
 from .models import(
     Article,
     ArticleImg,
-<<<<<<< HEAD
     Tag,
-    Favourites,
-    
-=======
-     Tag, Likes
->>>>>>> feat(like_dislike): impliment like article and links to the endpoint
+    Favourites, Likes
 )
 
 
@@ -29,10 +20,6 @@ class ArticleImgSerializer(serializers.ModelSerializer):
         fields = ['id', 'image_url', 'description']
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> feat(like_dislike): add model and serializer classes
 class CreateArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
     image = ArticleImgSerializer(read_only=True)
@@ -41,34 +28,15 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     """
-<<<<<<< HEAD
     tagList = TagField(many=True, required=False, source='tags')
-=======
-<<<<<<< HEAD
-=======
-    tagList = TagField(many=True, required=False, source='tags')
-
->>>>>>> feat(like_dislike): add model and serializer classes
->>>>>>> feat(like_dislike): add model and serializer classes
     class Meta:
         model = Article
         """
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-<<<<<<< HEAD
-        fields = ['id', 'title', 'body', 'description', 'image','tagList',
-         'author', 'slug', 'published', 'created_at', 'updated_at']
-=======
-<<<<<<< HEAD
-        fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
->>>>>>> feat(like_dislike): add model and serializer classes
-
-=======
         fields = ['id', 'title', 'body', 'description', 'image','tagList',
          'author', 'slug', 'published', 'created_at', 'updated_at', ]
->>>>>>> feat(like_dislike): add model and serializer classes
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
@@ -120,7 +88,7 @@ class TagsSerializer(serializers.ModelSerializer):
     def get_article(self, instance):
         return instance.slug
 
-<<<<<<< HEAD
+
 
 
 class FavouriteSerializer(serializers.ModelSerializer):
@@ -132,5 +100,11 @@ class FavouriteSerializer(serializers.ModelSerializer):
         ]
 
         
-=======
->>>>>>> feat(like_dislike): add model and serializer classes
+
+class LikeArticleViewSerializer(serializers.ModelSerializer):
+    article = CreateArticleViewSerializer(read_only=True)
+
+    class Meta:
+        model = Likes
+        fields = ['id','article', 'profile', 'like']
+
