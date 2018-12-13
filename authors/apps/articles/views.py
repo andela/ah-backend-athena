@@ -253,6 +253,14 @@ class CommentView(GenericAPIView):
                     status=status.HTTP_404_NOT_FOUND
             )
 
+    def get(self, request,slug):
+        serializer_class = CreateArticleViewSerializer
+        slug = slug
+        article = Article.objects.get(slug=slug)
+        serializer = serializer_class(article)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def put(self, request, *args, **kwargs):
         """ method allows the user to update his/her comment"""
         comment = request.data.get('comment', {})
