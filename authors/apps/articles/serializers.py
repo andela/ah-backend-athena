@@ -9,36 +9,6 @@ from .models import(
     Article,
 )
 
-# class RepliesSerializer(serializers.ModelSerializer):
-    
-#     class Meta:
-#         model = Replies
-#         fields = '__all__'
-
-#     def to_representation(self, instance):
-#         resp = super().to_representation(instance)
-#         profile = Profile.objects.all().filter(user=3).values()[0]
-#         comment= Comment.objects.all().filter(id=6).values()[0]
-#         resp['comment'] = comment
-#         resp['author'] = profile
-#         print("#############44444444", resp)
-#         return resp
-
-# class CommentSerializer(serializers.ModelSerializer):
-
-#     replies = RepliesSerializer(many=True, read_only=True)
-#     def to_representation(self, instance):
-#         response = super().to_representation(instance)
-#         profile = Profile.objects.all().filter(user=instance.author).values()
-#         reply= Replies.objects.all().values()
-#         response['author'] = profile
-#         response['replies'] = reply
-#         return response
-
-    # class Meta:
-    #     model = Comment
-    #     fields = ('id', 'comment_body', 'created_at', 'article', 'author', 'replies')
-
 class RepliesSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -78,14 +48,6 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
     # updated_at = serializers.DateTimeField(read_only=True)
     comment = CommentSerializer(many=True, read_only=True)
 
-    # def to_representation(self, instance):
-    #     response = super().to_representation(instance)
-    #     comment= Comment.objects.all().filter(id=response['id']).values()
-    #     print(response)
-    #     # response[] = comment
-    #     return response
-
-
     class Meta:
         model = Article
         """
@@ -111,6 +73,12 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Titles are restricted to 200 characters'
                 )
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        comment= Comment.objects.all().filter().values()   #bug to fix
+        response['comment'] = comment
+        return response
 
 
 class UpdateArticleViewSerializer(serializers.ModelSerializer):
