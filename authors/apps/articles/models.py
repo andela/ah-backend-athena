@@ -117,12 +117,11 @@ class Comments(models.Model):
     
         
 class Likes(models.Model):
-   """ """
-
-   """ """
+   """ 
+   Adds relationship to articles
+   """
    article = models.ForeignKey(Article, on_delete=models.CASCADE)
 
-   """ """
    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
-   """ """
+   
    like = models.BooleanField()
