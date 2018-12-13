@@ -8,6 +8,7 @@ from rest_framework.generics import(
     ListAPIView,
 )
 
+from .exceptions import PermisionDenied, CommentDoesNotExist
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.template.defaultfilters import slugify
@@ -28,10 +29,18 @@ from .serializers import(
 )
 
 def get_object(obj_class, Id):
+    """ return an object or error message if the object doesnot exist """
     try:
         return obj_class.objects.get(pk=Id)
     except obj_class.DoesNotExist:
-        return Response({"message": "object does not exists"}, Http404)
+        return Response(
+            {
+                "error":{ 
+                "body": [
+                    "object does not exists"
+                ]}},
+               status=status.HTTP_404_NOT_FOUND
+        )
 
 class CreateArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -76,7 +85,6 @@ class CreateArticleView(GenericAPIView):
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
         serializer.save(author=profile)
-        print("#####################", serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get(self, request, slug):
@@ -140,11 +148,13 @@ class ListAuthArticlesAPIView(ListAPIView):
 
 
 class CommentView(GenericAPIView):
+    """ This class allows authenticated users to comment on an article """
     permission_classes = (IsAuthenticated,)
     serializer_class = CommentSerializer
     # renderer_classes = (CommentJSONRenderer, )
 
     def post(self, request, **kwargs):
+        """ This method allows loged in users to comment on any article """
         comment = request.data.get('comment', {})
         try:
             slug = self.kwargs['slug']
@@ -156,46 +166,63 @@ class CommentView(GenericAPIView):
             serializer = self.serializer_class(data=comment)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data, status=201)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except:
             return Response(
-                {"message": "Sorry, article does not exist"}, status=status.HTTP_404_NOT_FOUND)
-
-    def put(self, request, *args, **kwargs):
-        comment = request.data.get('comment', {})
-        try:
-            Id = kwargs['id']
-            comment_obj = get_object(Comment, Id)
-            comment['author'] = request.user.id
-            serializer = self.serializer_class(comment_obj, data=comment)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
-        except:
-            return Response(
-                {
-                    "message":
-                    "Failed to update, comment or article doesnot exist"},
+                   {
+                    "error":{ 
+                    "body": [
+                        "Sorry, this article does not exist"
+                    ]}},
                     status=status.HTTP_404_NOT_FOUND
             )
 
+    def put(self, request, *args, **kwargs):
+        """ method allows the user to update his/her comment"""
+        comment = request.data.get('comment', {})
+
+        try:
+            Id = kwargs['id']
+            comment_obj = Comment.objects.get(pk=Id)
+            if comment_obj.author == request.user:
+                comment['author'] = request.user.id
+                serializer = self.serializer_class(comment_obj, data=comment)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                raise PermisionDenied       
+        except Comment.DoesNotExist:
+            return Response(
+                {
+                    "error":{ 
+                    "body":[
+                        "Failed to update, comment or article doesnot exist"
+                    ]}}
+            )
 
     def delete(self, request, **kwargs):
+        """ method allows the user to delete his/her comment """
         try:
             comment_obj = Comment.objects.get(id=kwargs['id'])
-            comment_obj.delete()
-            return Response(
-                {"message": "Comment deleted successfully"}, status=status.HTTP_200_OK)
-        except:
-            return Response(
-                {"message": "Can not delete, comment does not exist"}, status=status.HTTP_400_BAD_REQUEST)
-
+            if request.user == comment_obj.author:
+                comment_obj.delete()
+                return Response({
+                    "message":{ 
+                    "body":["Comment deleted successfully"]}},
+                    status=status.HTTP_200_OK)
+            else:
+                raise PermisionDenied
+        except Comment.DoesNotExist:
+            raise CommentDoesNotExist
 
 class RepliesView(GenericAPIView):
+    """ Class to allow users reply on comments """
     permission_classes = (IsAuthenticated, )
     serializer_class = RepliesSerializer
 
     def post(self, request, commentId):
+        """ This method allows a user to create a reply on a comment """
         reply = request.data.get('reply', {})
         try:
             comment = Comment.objects.get(id=commentId)
@@ -205,21 +232,31 @@ class RepliesView(GenericAPIView):
             serializer = self.serializer_class(data=reply)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data, status=201)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except:
-            return Response({"message": "Comment not found"})
+            return Response(
+                { 
+                    "errors":{
+                    "body": [
+                    "Comment not found"
+                    ]
+            }}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, id):
+        """ This method allows a user to edit his/her reply on a comment """
         reply = request.data.get('reply', None)
         try:
-            reply_obj = get_object(Replies, id)
+            reply_obj = Replies.objects.get(id=id)
             author = request.user
-            reply['author'] = author.id
-            serializer = self.serializer_class(reply_obj, data=reply)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=200)
-        except:
+            if author == reply_obj.author:
+                reply['author'] = author.id
+                serializer = self.serializer_class(reply_obj, data=reply)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                raise PermisionDenied
+        except Replies.DoesNotExist:
             return Response({
                 "errors":{
                 "body": [
@@ -228,14 +265,20 @@ class RepliesView(GenericAPIView):
             }})
 
     def delete(self, request, id):
+        """ This method allows a user to delete his/her reply from a comment """
         try:
             reply_obj = Replies.objects.get(id=id)
-            reply_obj.delete()
-            return Response(
-                {"message": {
-                    "body": ["Reply deleted successfully"]}},
-                    status=status.HTTP_200_OK)
-        except:
+            print("dkhdhjk djkj", reply_obj.author)
+            print("###############", request.user)
+            if request.user == reply_obj.author.id:
+                reply_obj.delete()
+                return Response(
+                    {"message": {
+                        "body": ["Reply deleted successfully"]}},
+                        status=status.HTTP_200_OK)
+            else:
+                raise PermisionDenied
+        except Replies.DoesNotExist:
             return Response({
                 "errors":{
                 "body": [
