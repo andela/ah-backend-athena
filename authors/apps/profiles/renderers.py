@@ -4,7 +4,8 @@ import json
 
 class ProfileJSONRenderer(JSONRenderer):
     """
-    Checks for rendering errors if the view throws them and lets default JSONRenderer handle them
+    Checks for rendering errors if the view throws them
+    and lets default JSONRenderer handle them
     """
     charset = 'utf-8'
     object_label = 'profile'

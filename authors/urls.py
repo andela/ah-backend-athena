@@ -20,22 +20,24 @@ from drf_yasg import openapi
 from rest_framework.permissions import AllowAny
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="Authors Haven",
-      default_version='v1',
-      description="A social platform for the creative at heart.",
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contact@snippets.local"),
-      license=openapi.License(name="BSD License"),
-   ),
-   permission_classes=(AllowAny,),
+    openapi.Info(
+        title="Authors Haven",
+        default_version='v1',
+        description="A social platform for the creative at heart.",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="contact@snippets.local"),
+        license=openapi.License(name="BSD License"),
+    ),
+    permission_classes=(AllowAny,),
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
     path('api/', include('authors.apps.authentication.urls')),
-    path(r'swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path(r'swagger/', schema_view.with_ui(
+        'swagger',
+        cache_timeout=0), name='schema-swagger-ui'
+    ),
     path('api/', include('authors.apps.profiles.urls')),
+    path('api/', include('authors.apps.articles.urls')),
 ]
-
