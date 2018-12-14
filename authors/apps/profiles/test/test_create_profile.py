@@ -18,6 +18,7 @@ class TestProfileCreate(APITestCase):
                 'password': 'Sokosok1!'
             }
         }
+
     def verify_account(self, token, uidb64):
         request = APIRequestFactory().get(
             reverse(
