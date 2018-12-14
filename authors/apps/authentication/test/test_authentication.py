@@ -198,6 +198,9 @@ class TestUsers(APITestCase):
 
 class TestSocialAuthUsers(APITestCase):
 
+    def setUp(self):
+        self.client = APIClient()
+
     def save_user_to_db(self, username='', email='', password=''):
         user = {
             'user': {
