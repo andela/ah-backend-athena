@@ -1,16 +1,11 @@
 from .base import BaseTestArticles
 from rest_framework.views import status
 from ..models import Article
+import json
 
 
 class TestArticles(BaseTestArticles):
 
-    def create_article(self):
-        self.client.credentials(
-            HTTP_AUTHORIZATION='Bearer ' + self.login_user())
-        response = self.client.post(
-            '/api/articles/', data=self.article, format='json')
-        return response.data['slug']
 
     def test_create_article(self):
         self.client.credentials(

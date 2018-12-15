@@ -17,7 +17,7 @@ from django.http import Http404
 
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
-from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer, CommentJSONRenderer
+from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
 from .models import ArticleImg, Article, Comment, Replies
 from ..profiles.models import Profile
 
@@ -56,32 +56,6 @@ class CreateArticleView(GenericAPIView):
         call the JWTAuthentication class to decode token
         and retrieve usere data
         """
-
-        image_data = article['image']
-
-        image_obj = ArticleImg(
-            image_url=image_data['image_url'],
-            description=image_data['image_description']
-        )
-        image_obj.save()
-        img_id = ArticleImg.objects.filter(
-            image_url=image_data['image_url']).first()
-        article['image'] = img_id.id
-
-        """create slug from an article"""
-
-        try:
-            slug = slugify(article["title"]).replace("_", "-")
-            slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
-            article["slug"] = slug
-
-        except KeyError:
-
-            pass
-        current_user = User.objects.all().filter(
-            email=request.user).values()[0]
-        user_id = current_user['id']
-        profile = Profile.objects.get(user__id=user_id)
 
         image_data = article['image']
 
@@ -243,7 +217,7 @@ class CommentView(GenericAPIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except:
+        except Article.DoesNotExist:
             return Response(
                    {
                     "error":{ 
@@ -256,8 +230,12 @@ class CommentView(GenericAPIView):
     def get(self, request,slug):
         serializer_class = CreateArticleViewSerializer
         slug = slug
-        article = Article.objects.get(slug=slug)
-        serializer = serializer_class(article)
+        try:
+            article = Article.objects.get(slug=slug)
+            serializer = serializer_class(article)
+        except Article.DoesNotExist:
+            raise CommentDoesNotExist
+
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -282,7 +260,8 @@ class CommentView(GenericAPIView):
                     "error":{ 
                     "body":[
                         "Failed to update, comment or article doesnot exist"
-                    ]}}
+                    ]}},
+                    status=status.HTTP_400_BAD_REQUEST
             )
 
     def delete(self, request, **kwargs):
@@ -346,15 +325,13 @@ class RepliesView(GenericAPIView):
                 "body": [
                 "can't update, reply not found"
                 ]
-            }})
+            }}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
         """ This method allows a user to delete his/her reply from a comment """
         try:
             reply_obj = Replies.objects.get(id=id)
-            print("dkhdhjk djkj", reply_obj.author)
-            print("###############", request.user)
-            if request.user == reply_obj.author.id:
+            if request.user == reply_obj.author:
                 reply_obj.delete()
                 return Response(
                     {"message": {
