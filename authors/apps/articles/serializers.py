@@ -3,14 +3,44 @@ from rest_framework import serializers
 from rest_framework import status, exceptions
 from ..authentication.models import User
 from ..profiles.serializers import ProfileSerializer
-from ..articles.models import  Comment, Replies, Profile
+from ..articles.models import  Comment, Replies, Profile, Readings
 from ..profiles.models import Profile
-
 
 from .models import(
     Article,
     ArticleImg
 )
+
+class RepliesSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Replies
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        resp = super().to_representation(instance)
+        profile = Profile.objects.all().filter(user=instance.author).values()[0]
+        # comment= Comment.objects.all().filter(id=6).values()[0]
+        # resp['comment'] = comment
+        resp['author'] = profile
+        return resp
+
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    replies = RepliesSerializer(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        profile = Profile.objects.all().filter(user=instance.author).values()[0]
+        reply= Replies.objects.all().filter(comment_id=response['id']).values()
+        response['author'] = profile
+        response['replies'] = reply
+        return response
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'comment_body', 'created_at', 'article', 'author', 'replies')
 
 
 class ArticleImgSerializer(serializers.ModelSerializer):
@@ -68,15 +98,9 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         or response, this includes fields specified explicitly above.
         """
         fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', 'created_at', 'updated_at', 'comment' ]
+                  'author', 'slug', 'published', 'created_at', 'updated_at', 'comment', 'read_time' ]
 
-    # def to_representation(self, instance):
-    #     response = super().to_representation(instance)
-    #     comment= Comment.objects.all().filter().values()   #bug to fix
-    #     reply = Replies.objects.all().filter().values() 
-    #     response['comment'] = comment
-    #     response['reply'] = reply
-    #     return response
+  
 
 
 class UpdateArticleViewSerializer(serializers.ModelSerializer):
@@ -90,6 +114,21 @@ class UpdateArticleViewSerializer(serializers.ModelSerializer):
         """
         fields = ['id', 'title', 'body', 'description', 'image',
                   'author', 'slug', 'published', ' updated_at', ' updated_at']
+
+
+class ReadingSerializer(serializers.ModelSerializer):
+    read_time = serializers.IntegerField(read_only=True)
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        article = Article.objects.all().filter().values()[0]
+        response['viewers'] = article['views_count']
+        response['read_time'] = article['read_time']
+        response['article'] = article['title']
+        return response
+    class Meta:
+        model = Readings  
+        fields = ['id', 'read_time' ,'viewers', 'article']
 
 
 

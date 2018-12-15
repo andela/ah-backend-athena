@@ -47,6 +47,8 @@ class Article(models.Model):
     """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    read_time = models.IntegerField(default=0)
+    views_count = models.IntegerField(default=0)
 
     objects = models.Manager()
 
@@ -91,4 +93,18 @@ class Replies(models.Model):
 
     class Meta:
         ordering = ['created_at']
+
+class Readings(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    viewers = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "article_id: {}, author: {}, views: {}".format(self.article, self.author, self.viewers)
+
+    @property
+    def get_reader(self):
+        if self.author is None:
+            return True
+        return False
 

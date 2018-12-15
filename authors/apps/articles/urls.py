@@ -5,10 +5,12 @@ from .views import(
     CommentView,
     RepliesView,
     ListAuthArticlesAPIView,
-    RetrieveArticlesAPIView
+    RetrieveArticlesAPIView,
+    ReadingView
 )
 
 urlpatterns = [
+    path('articles/<slug>/<count>', ReadingView.as_view(), name='reading'),
     path('articles/<slug>/', CreateArticleView.as_view(), name='article'),
     path('articles/', CreateArticleView.as_view(), name='article-create'),
     path('articles', RetrieveArticlesAPIView.as_view(), name='article-create'),

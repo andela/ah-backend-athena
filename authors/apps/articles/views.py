@@ -18,7 +18,7 @@ from django.http import Http404
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Comment, Replies
+from .models import ArticleImg, Article, Comment, Replies, Readings
 from ..profiles.models import Profile
 
 from .serializers import(
@@ -27,6 +27,7 @@ from .serializers import(
     RepliesSerializer,
     UpdateArticleViewSerializer,
     ArticleImgSerializer,
+    ReadingSerializer
 )
 
 def get_object(obj_class, Id):
@@ -72,6 +73,11 @@ class CreateArticleView(GenericAPIView):
         slug = slugify(article["title"]).replace("_", "-")
         slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
         article["slug"] = slug
+        full_article = "{} {}".format(article['title'], article['body'])
+        words = full_article.split()
+        minutes = (len(words)//120)
+        article['read_time'] = int(minutes)
+
 
         current_user = User.objects.all().filter(
             email=request.user).values()[0]
@@ -94,8 +100,17 @@ class CreateArticleView(GenericAPIView):
         if not article:
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = self.serializer_class(article)
+        if str(article.author) != str(request.user.username):
+            article.views_count += 1
+            article.save()
+            print("################", article.author)
+            print("################", request.user.username)
+            serializer = self.serializer_class(article)
+            serializer.fields.pop('views_count', None)
+        else: 
+            print("@@@@@@@@@@@@@", article.author)
+            serializer = self.serializer_class(article)
+            
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -162,6 +177,60 @@ class CreateArticleView(GenericAPIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class ReadingView(GenericAPIView):
+    def reader(self, request, slug):
+        try:
+            article = Article.objects.filter(slug=slug).first()
+            reader = Readings.objects.filter(author=request.user.id).first()
+            user = User.objects.get(pk=request.user.id)
+            if user != reader.author:
+                article.views_count += 1
+                article.save()
+            readings = Readings()
+            readings.author = user
+            readings.viewers = article.views_count
+            readings.read_time = article.read_time
+            readings.article = article
+            readings.save()
+            return reader
+        except Readings.DoesNotExist:
+            return None
+
+    def do_math(self, article, count):
+        read_time = article.read_time
+        average = 0
+        if int(read_time) < int(count) or int(read_time) == int(count):
+            average = int(count)
+            print("%%%%%%", average)
+        elif int(count) != 0 and int(read_time) > int(count):
+            average = int(read_time) // int(count)
+            print("**********", average)
+        
+        if average >= int(read_time)/2:
+            print(int(read_time)/2)
+            return True
+
+        return False
+
+
+    serializer_class = ReadingSerializer
+    def post(self, request, **kwargs):
+        """
+         This class method is used retrieve article by id
+        """
+        slug = kwargs['slug']
+        count = kwargs['count']
+        article = Article.objects.filter(slug=slug).first()
+        reader = self.reader(request, slug)
+        serializer = self.serializer_class(reader)
+        if not reader:
+            error = {"error": "This article doesnot exist"}
+            return Response(error, status=status.HTTP_404_NOT_FOUND)
+        average = self.do_math(article, count)
+        print("############", self.reader(request, slug))
+
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ListAuthArticlesAPIView(ListAPIView):
 
