@@ -18,6 +18,9 @@ class BaseTestArticles(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.roni = self.save_user('roni', 'roni@a.com', 'P@ssword23lslsn')
+        self.sama = self.save_user('sama', 'samantha@a.com', 'P@ssword23lslsn')
+
 
         self.data = {
             "user": {
@@ -46,7 +49,11 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
-
+        self.comment = {
+            "comment": {
+            "comment_body": "Hey, this is another comment for you "	
+            }
+        }
 
         self.updated_article = {
 
@@ -103,6 +110,19 @@ class BaseTestArticles(APITestCase):
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
 
+    def save_user(self, username, email, pwd):
+        validated_data = {'username': username,
+                          'email': email, 'password': pwd}
+        return User.objects.create_user(**validated_data)
+
+    
+    def get_samantha_token(self):
+        return self.sama.token()
+
+    def get_roni_token(self):
+        return self.roni.token()
+
+
     def verify_account(self, token, uidb64):
         request = APIRequestFactory().get(
             reverse(
@@ -115,15 +135,14 @@ class BaseTestArticles(APITestCase):
         return response
 
     def login_user(self):
-
         request = APIRequestFactory().post(
             reverse("registration")
         )
-        user = User.objects.get()
-        token, uidb64 = RegistrationAPIView.generate_activation_link(
-            user, request, send=False)
-        self.verify_account(token, uidb64)
+        return User.objects.filter().first().token()
+
+    def create_article(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.login_user())
         response = self.client.post(
-            '/api/users/login/', self.login_credentials, format='json')
-        jwt_token = response.data['token']
-        return jwt_token
+            '/api/articles/', data=self.article, format='json')
+        return response.data['slug']
