@@ -7,7 +7,7 @@ from .views import(
     RetrieveArticlesAPIView,
     ArticleTagsAPIView,
     ArticleDeleteAPIView,
-    FavouritesView
+    FavouritesView,
     LikeArticleView
 )
 

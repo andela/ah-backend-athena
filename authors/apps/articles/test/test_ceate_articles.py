@@ -62,6 +62,7 @@ class TestArticles(BaseTestArticles):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
 <<<<<<< HEAD
+<<<<<<< HEAD
             
         fake_slug = "ed"*23
 =======
@@ -78,6 +79,9 @@ class TestArticles(BaseTestArticles):
         fake_slug = "ed"*23
 >>>>>>>  feat(like_dislike): resolve conflicts
 >>>>>>>  feat(like_dislike): resolve conflicts
+=======
+        fake_slug = "ed"*23
+>>>>>>>  feat(like_dislike): fix conflicts
         response = self.client.put(
             '/api/articles/ffhfh-ggrg/', data=self.updated_article, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
