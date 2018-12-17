@@ -3,10 +3,6 @@ import json
 from rest_framework.renderers import JSONRenderer
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>>  feat(like_dislike): resolve conflicts
 class ArticleJSONRenderer(JSONRenderer):
     charset = 'utf-8'
 
@@ -17,10 +13,7 @@ class ArticleJSONRenderer(JSONRenderer):
         the default JSONRenderer to handle rendering errors, so we need to
         check for this case.
         """
-<<<<<<< HEAD
       
-=======
->>>>>>>  feat(like_dislike): resolve conflicts
         errors = data.get('errors', None)
 
         if errors is not None:

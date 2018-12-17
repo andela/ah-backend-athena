@@ -61,27 +61,7 @@ class TestArticles(BaseTestArticles):
     def test_non_existing_article(self):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
-<<<<<<< HEAD
-<<<<<<< HEAD
-            
         fake_slug = "ed"*23
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-        fake_slug = "ed"*23
-=======
-<<<<<<< HEAD
-=======
-        fake_slug = "ed"*23
->>>>>>> feat(articals): Users can create articles
->>>>>>> feat(articals): Users can create articles
-=======
-        fake_slug = "ed"*23
->>>>>>>  feat(like_dislike): resolve conflicts
->>>>>>>  feat(like_dislike): resolve conflicts
-=======
-        fake_slug = "ed"*23
->>>>>>>  feat(like_dislike): fix conflicts
         response = self.client.put(
             '/api/articles/ffhfh-ggrg/', data=self.updated_article, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
