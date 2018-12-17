@@ -21,15 +21,15 @@ from django.template.defaultfilters import slugify
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Tag
+from .models import ArticleImg, Article, Tag, Favourites
 from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
     UpdateArticleViewSerializer,
     ArticleImgSerializer,
-    TagsSerializer
-
+    TagsSerializer,
+    FavouriteSerializer,
 )
 
 class CreateArticleView(GenericAPIView):
@@ -74,7 +74,6 @@ class CreateArticleView(GenericAPIView):
         serializer.save(author=profile, image=image_instance)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
     def get(self, request, slug):
         """
@@ -203,3 +202,104 @@ class ArticleDeleteAPIView(GenericAPIView):
         output = TagsSerializer(article)
         return Response(output.data)
 
+    
+class FavouritesView(GenericAPIView):
+    serializer_class = FavouriteSerializer
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+
+    def post(self, request, **kwargs):
+        user = JWTAuthentication().authenticate(request)
+        user_id = user[0].id
+        try:
+            article_slug = kwargs['slug']
+            profile = Profile.objects.get(user__id=user_id)
+            article_obj = Article.objects.get(slug=article_slug)
+            article_id = article_obj.id
+        except:
+            return Response({
+                "error":{
+                    "body":[
+                        "article doesnot exist"
+                    ]
+                }
+            },
+            status=400    
+        )
+
+        fav = Favourites.objects.filter(
+            article_id=article_id
+        ).filter(
+            profile = profile
+        )
+        fav_option = fav.first()
+        if fav_option:
+            return Response(
+                {
+                    "error":{
+                        "body":[
+                            "article already favorited"
+                        ]
+                    }
+                },
+                status=409
+            )
+        else:
+            
+            serializer = self.serializer_class(data={},partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(profile=profile,article=article_obj,favourite=True)
+            
+            favs = Favourites.objects.filter(
+                article_id=article_id
+                ).filter(
+                    favourite=True
+            )
+            
+            article_obj.favourited = True
+            article_obj.favouriteCount = favs.count()
+            article_obj.save()
+            return Response(serializer.data, status=200)
+
+    def delete(self, request, **kwargs):
+        user = JWTAuthentication().authenticate(request)
+        user_id = user[0].id
+        try:
+            article_slug = kwargs['slug']
+            profile = Profile.objects.get(user__id=user_id)
+            article_obj = Article.objects.get(slug=article_slug)
+            articel_id = article_obj.id
+        except:
+            return Response({
+                "error":{
+                    "body":[
+                        "article doesnot exist"
+                    ]
+                }
+            },
+            status=400    
+        )
+        fav = Favourites.objects.filter(
+            article_id=articel_id
+        ).filter(
+            profile = profile
+        )
+        if fav:
+            fav.delete()
+        article_obj.favourited = False
+        article_obj.save()
+        serializer = self.serializer_class(data={},partial=True)
+        serializer.is_valid(raise_exception=True)
+        
+        return Response({
+            "message":{
+                "body":[
+                    "article has been unfavorited"
+                ]
+            }
+        }, status=200)
+
+
+        
+
+        

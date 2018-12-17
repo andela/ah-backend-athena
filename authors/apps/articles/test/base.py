@@ -61,6 +61,7 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
+        
         self.article_log_tile = {
 
             "article": {
@@ -70,6 +71,32 @@ class BaseTestArticles(APITestCase):
                 "image": {
                         "image_url": "http//url",
                         "image_description": "image is cool"
+                }
+            }
+        }
+
+        self.article_big_body = {
+
+            "article": {
+                "title": "How to  train your dragon",
+                "description": "Ever wonder how?",
+                "body": "You have to believe"*200,
+                "image": {
+                        "image_url": "http//url",
+                        "image_description": "image is cool"
+                }
+            }
+        }
+
+        self.updated_article = {
+
+            "article": {
+                "title": "How to  train your dragon updated",
+                "description": "Ever wonder how ggggg?",
+                "body": "You have to believe",
+                "image": {
+                        "image_url": "http//url",
+                        "image_description": "image is cooljjjj"
                 }
             }
         }

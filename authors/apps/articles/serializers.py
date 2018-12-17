@@ -8,7 +8,8 @@ from .relations import TagField
 from .models import(
     Article,
     ArticleImg,
-     Tag
+    Tag,
+    Favourites,
 )
 
 
@@ -36,7 +37,7 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         or response, this includes fields specified explicitly above.
         """
         fields = ['id', 'title', 'body', 'description', 'image','tagList',
-         'author', 'slug', 'published', 'created_at', 'updated_at', ]
+         'author', 'slug', 'published', 'created_at', 'updated_at']
 
         """
         Overide the validate methods to include validatiosn for 
@@ -93,3 +94,12 @@ class TagsSerializer(serializers.ModelSerializer):
     def get_article(self, instance):
         return instance.slug
 
+
+
+class FavouriteSerializer(serializers.ModelSerializer):
+    article = CreateArticleViewSerializer(read_only=True)
+    class Meta:
+        model = Favourites
+        fields = [
+            'article', 'favourite', 'profile'
+        ]

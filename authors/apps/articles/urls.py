@@ -6,7 +6,8 @@ from .views import(
     CreateArticleView,
     RetrieveArticlesAPIView,
     ArticleTagsAPIView,
-    ArticleDeleteAPIView
+    ArticleDeleteAPIView,
+    FavouritesView
 )
 
 urlpatterns = [
@@ -15,5 +16,6 @@ urlpatterns = [
     path('articles/<str:slug>/', CreateArticleView.as_view()),
     path('articles/', CreateArticleView.as_view(), name='article-create'),
     path('<slug>/tags/',ArticleTagsAPIView.as_view(), name='article-tags'),
-    path('<slug>/tags/<tag>/', ArticleDeleteAPIView.as_view(), name='delete-tag' )
+    path('<slug>/tags/<tag>/', ArticleDeleteAPIView.as_view(), name='delete-tag' ),
+    path('articles/<slug>/favorite/', FavouritesView.as_view())
 ]

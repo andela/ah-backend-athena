@@ -15,7 +15,7 @@ class Article(models.Model):
     identifies an article with a certain user.
     """
 
-    """Every modle a title ield"""
+    """Every model has a title field"""
     title = models.CharField(db_index=True, max_length=255)
 
     """The author field identifies an article with a certain user."""
@@ -53,6 +53,12 @@ class Article(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    """
+    these fields show if the article is favourited
+    and how many favourites an article has
+    """
+    favourited = models.BooleanField(default=False)
+    favouriteCount = models.IntegerField(default=0)
 
     objects = models.Manager()
 
@@ -63,3 +69,20 @@ class Tag(models.Model):
     tag = models.CharField(max_length=255)
     slug = models.SlugField(db_index=True, unique=True)
     
+
+class Favourites(models.Model):
+    """
+    field contains id of user who has
+    favourited an article
+    """
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
+    """
+    this fields contains the id of the article
+    being favourited
+    """
+    article = models.ForeignKey(Article, related_name="article_id", on_delete=models.CASCADE, null=True)
+    """
+    this fields the favourite value, either True or
+    False
+    """
+    favourite = models.BooleanField(default=False)
