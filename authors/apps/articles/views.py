@@ -7,6 +7,7 @@ from rest_framework.generics import(
     RetrieveUpdateAPIView,
     GenericAPIView,
     ListAPIView,
+    CreateAPIView
 )
 
 from rest_framework.permissions import (
@@ -21,16 +22,19 @@ from django.template.defaultfilters import slugify
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Tag, Favourites
+from .models import ArticleImg, Article, Tag, Favourites, Likes
+
 from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
-    UpdateArticleViewSerializer,
     ArticleImgSerializer,
     TagsSerializer,
     FavouriteSerializer,
+    UpdateArticleViewSerializer, LikeArticleViewSerializer
+
 )
+
 
 class CreateArticleView(GenericAPIView):
         
@@ -38,7 +42,7 @@ class CreateArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = CreateArticleViewSerializer
-
+    
     def post(self, request):
         """ The post method is used to create articles"""
         article = request.data.get('article', {})
@@ -53,6 +57,7 @@ class CreateArticleView(GenericAPIView):
             image_url=image_data['image_url'],
             description=image_data['image_description']
         )
+
         image_obj.save()
         image_instance = ArticleImg.objects.filter(
             image_url=image_data['image_url'],
@@ -300,6 +305,70 @@ class FavouritesView(GenericAPIView):
         }, status=200)
 
 
-        
+    
 
+class LikeArticleView(GenericAPIView):
+    def post(self, request, slug):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+
+        try:
+            current_article = Article.objects.get(
+            slug=slug)
+        except Article.DoesNotExist:
+            raise exceptions.NotFound(
+                'This artical doesnot exist'
+            )
         
+        user_like_options = Likes.objects.filter(profile=profile).filter(article__slug=slug)
+        
+        if len(user_like_options) >= 1:
+            user_like_option = user_like_options.first()
+            if not user_like_option.like:
+                current_article.likes_count = current_article.likes_count + 1
+                current_article.save()
+            user_like_option.like = True
+            user_like_option.save()
+            return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
+        else:
+            current_article.likes_count = current_article.likes_count + 1
+            current_article.save()
+            serializer = LikeArticleViewSerializer(data={ "like":True })
+            serializer.is_valid(raise_exception=True)
+            serializer.save(article=current_article, profile= profile)
+        
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    
+    def delete(self, request, slug):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+
+        try:
+            current_article = Article.objects.get(
+            slug=slug)
+        except Article.DoesNotExist:
+            raise exceptions.NotFound(
+                'This artical doesnot exist'
+            )
+
+        user_like_options = Likes.objects.filter(profile=profile).filter(article__slug=slug)
+        
+        if len(user_like_options) >= 1:
+
+            user_like_option = user_like_options.first()
+            if user_like_option.like and current_article.likes_count > 0:
+                current_article.likes_count = current_article.likes_count - 1
+                current_article.save()
+            user_like_option.like = False
+            user_like_option.save()
+            return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
+        else:
+            current_article.likes_count = current_article.likes_count - 1
+            current_article.save()
+            serializer = LikeArticleViewSerializer(data={ "like":False })
+            serializer.is_valid(raise_exception=True)
+            serializer.save(article=current_article, profile= profile)
+        
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+

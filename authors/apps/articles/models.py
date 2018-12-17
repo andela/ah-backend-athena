@@ -59,6 +59,7 @@ class Article(models.Model):
     """
     favourited = models.BooleanField(default=False)
     favouriteCount = models.IntegerField(default=0)
+    likes_count = models.IntegerField(default=0)
 
     objects = models.Manager()
 
@@ -114,3 +115,13 @@ class Comments(models.Model):
             return False
         return True
     
+        
+class Likes(models.Model):
+   """ 
+   Adds relationship to articles
+   """
+   article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+   profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
+
+   like = models.BooleanField()

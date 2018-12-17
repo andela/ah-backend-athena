@@ -9,7 +9,7 @@ from .models import(
     Article,
     ArticleImg,
     Tag,
-    Favourites,
+    Favourites, Likes
 )
 
 
@@ -29,7 +29,6 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(read_only=True)
     """
     tagList = TagField(many=True, required=False, source='tags')
-
     class Meta:
         model = Article
         """
@@ -37,12 +36,8 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         or response, this includes fields specified explicitly above.
         """
         fields = ['id', 'title', 'body', 'description', 'image','tagList',
-         'author', 'slug', 'published', 'created_at', 'updated_at']
+         'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
-        """
-        Overide the validate methods to include validatiosn for 
-        different fields
-        """
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
         article = Article.objects.create(**validated_data)
@@ -81,7 +76,6 @@ class UpdateArticleViewSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'body', 'description', 'image',
                   'author', 'slug', 'published', ' updated_at', ' updated_at']
 
-    
 
 class TagsSerializer(serializers.ModelSerializer):
     article = serializers.SerializerMethodField()
@@ -96,6 +90,7 @@ class TagsSerializer(serializers.ModelSerializer):
 
 
 
+
 class FavouriteSerializer(serializers.ModelSerializer):
     article = CreateArticleViewSerializer(read_only=True)
     class Meta:
@@ -103,3 +98,13 @@ class FavouriteSerializer(serializers.ModelSerializer):
         fields = [
             'article', 'favourite', 'profile'
         ]
+
+        
+
+class LikeArticleViewSerializer(serializers.ModelSerializer):
+    article = CreateArticleViewSerializer(read_only=True)
+
+    class Meta:
+        model = Likes
+        fields = ['id','article', 'profile', 'like']
+

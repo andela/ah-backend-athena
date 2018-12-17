@@ -55,6 +55,7 @@ class BaseTestArticles(APITestCase):
             }
         }
 
+
         self.updated_article = {
 
             "article": {
@@ -68,13 +69,26 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
-        
+
         self.article_log_tile = {
 
             "article": {
                 "title": "How to  train your dragon"*200,
                 "description": "Ever wonder how?",
                 "body": "You have to believe",
+                "image": {
+                        "image_url": "http//url",
+                        "image_description": "image is cool"
+                }
+            }
+        }
+
+        self.article_big_body = {
+
+            "article": {
+                "title": "How to  train your dragon",
+                "description": "Ever wonder how?",
+                "body": "You have to believe"*200,
                 "image": {
                         "image_url": "http//url",
                         "image_description": "image is cool"
@@ -107,6 +121,7 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
+
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
 
