@@ -27,7 +27,7 @@ class TestFavouriteArticle(BaseTestArticles):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(
-            "favourited",
+            "favourite",
             str(json.loads(response.content))
         )
     

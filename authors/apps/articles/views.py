@@ -7,10 +7,6 @@ from rest_framework.generics import(
     RetrieveUpdateAPIView,
     GenericAPIView,
     ListAPIView,
-<<<<<<< HEAD
-=======
-
->>>>>>> feat(articles) user can favorite article
 )
 
 from rest_framework.permissions import (
@@ -25,32 +21,20 @@ from django.template.defaultfilters import slugify
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-<<<<<<< HEAD
-from .models import ArticleImg, Article, Tag
-=======
-from .models import ArticleImg, Article, Favourites
->>>>>>> feat(articles) user can favorite article
+from .models import ArticleImg, Article, Tag, Favourites
 from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
     UpdateArticleViewSerializer,
     ArticleImgSerializer,
-<<<<<<< HEAD
-    TagsSerializer
-
+    TagsSerializer,
+    FavouriteSerializer,
 )
 
 class CreateArticleView(GenericAPIView):
         
     queryset = Article.objects.select_related('author', 'author__user')
-=======
-    FavouriteSerializer,
-)
-
-
-class CreateArticleView(GenericAPIView):
->>>>>>> feat(articles) user can favorite article
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = CreateArticleViewSerializer
@@ -62,15 +46,9 @@ class CreateArticleView(GenericAPIView):
         call the JWTAuthentication class to decode token
         and retrieve usere data
         """
-<<<<<<< HEAD
         
         image_data = article['image']
 
-=======
-
-        image_data = article['image']
-
->>>>>>> feat(articles) user can favorite article
         image_obj = ArticleImg(
             image_url=image_data['image_url'],
             description=image_data['image_description']
@@ -80,19 +58,11 @@ class CreateArticleView(GenericAPIView):
             image_url=image_data['image_url'],
             description=image_data['image_description']
         ).first()
-<<<<<<< HEAD
 
         slug = slugify(article["title"]).replace("_", "-")
         slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
         article["slug"] = slug
 
-=======
-
-        slug = slugify(article["title"]).replace("_", "-")
-        slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
-        article["slug"] = slug
-
->>>>>>> feat(articles) user can favorite article
         current_user = User.objects.all().filter(
             email=request.user).values()[0]
         user_id = current_user['id']
@@ -105,10 +75,6 @@ class CreateArticleView(GenericAPIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-<<<<<<< HEAD
-
-=======
->>>>>>> feat(articles) user can favorite article
     def get(self, request, slug):
         """
          This class method is used retrieve article by id
@@ -119,7 +85,6 @@ class CreateArticleView(GenericAPIView):
         if not article:
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
-<<<<<<< HEAD
 
         serializer = self.serializer_class(article)
 
@@ -177,65 +142,6 @@ class CreateArticleView(GenericAPIView):
 
         """ Create a new slug id from the title"""
 
-=======
-
-        serializer = self.serializer_class(article)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def delete(self, request, slug):
-        """
-        This methode deletes a user artical
-        """
-        user_data = JWTAuthentication().authenticate(request)
-        profile = Profile.objects.get(user__id=user_data[0].id)
-
-        try:
-            article = Article.objects.get(slug=slug)
-
-            if not (article.author_id == profile.id):
-
-                return Response(
-                    {"error": "Yo can only delete your own articles"},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-        except Article.DoesNotExist:
-            error = {"error": "This article doesnot exist"}
-            return Response(error, status=status.HTTP_404_NOT_FOUND)
-
-        data = {"message": "article was deleted successully"}
-        return Response(data, status=status.HTTP_200_OK)
-
-    def put(self, request, slug):
-        serializer_class = UpdateArticleViewSerializer
-        """
-            This methode updates an article
-        """
-        try:
-            article_obj = Article.objects.get(slug=slug)
-        except Article.DoesNotExist:
-            error = {"error": "This article doesnot exist"}
-            return Response(error, status=status.HTTP_404_NOT_FOUND)
-
-        article = request.data.get('article', {})
-        user_info = JWTAuthentication().authenticate(request)
-        current_user = user_info[0]
-        profile = Profile.objects.get(user__id=current_user.id)
-        image_data = article['image']
-
-        image_obj = ArticleImg(
-            image_url=image_data['image_url'],
-            description=image_data['image_description']
-        )
-        image_obj.save()
-
-        img_id = ArticleImg.objects.filter(
-            image_url=image_data['image_url']).first()
-        article['image'] = img_id.id
-
-        """ Create a new slug id from the title"""
-
->>>>>>> feat(articles) user can favorite article
         slug = slugify(article["title"]).replace("_", "-")
         slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
         article["slug"] = slug
@@ -262,7 +168,6 @@ class RetrieveArticlesAPIView(GenericAPIView):
         for art in list(article):
             article_list.append(CreateArticleViewSerializer(art).data)
         return Response(article_list, status=status.HTTP_200_OK)
-<<<<<<< HEAD
 
 class ArticleTagsAPIView(GenericAPIView):
     queryset = Tag.objects.all()
@@ -297,7 +202,6 @@ class ArticleDeleteAPIView(GenericAPIView):
         output = TagsSerializer(article)
         return Response(output.data)
 
-=======
     
 class FavouritesView(GenericAPIView):
     serializer_class = FavouriteSerializer
@@ -399,4 +303,3 @@ class FavouritesView(GenericAPIView):
         
 
         
->>>>>>> feat(articles) user can favorite article

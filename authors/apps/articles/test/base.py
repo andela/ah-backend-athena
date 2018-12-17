@@ -39,10 +39,7 @@ class BaseTestArticles(APITestCase):
                 "title": "How to  train your dragon",
                 "description": "Ever wonder how?",
                 "body": "You have to believe",
-<<<<<<< HEAD
                 "tagList": ["reactjs", "haskell", "ruby", "rails", "magic!"],
-=======
->>>>>>> feat(articles) user can favorite article
                 "image": {
                         "image_url": "http//url",
                         "image_description": "image is cool"
@@ -50,7 +47,6 @@ class BaseTestArticles(APITestCase):
             }
         }
 
-<<<<<<< HEAD
 
         self.updated_article = {
 
@@ -65,13 +61,7 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
-        self.article_log_tile = {
-
-            "article": {
-                "title": "How to  train your dragon"*200,
-                "description": "Ever wonder how?",
-                "body": "You have to believe",
-=======
+        
         self.article_log_tile = {
 
             "article": {
@@ -91,15 +81,12 @@ class BaseTestArticles(APITestCase):
                 "title": "How to  train your dragon",
                 "description": "Ever wonder how?",
                 "body": "You have to believe"*200,
->>>>>>> feat(articles) user can favorite article
                 "image": {
                         "image_url": "http//url",
                         "image_description": "image is cool"
                 }
             }
         }
-<<<<<<< HEAD
-=======
 
         self.updated_article = {
 
@@ -113,7 +100,6 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
->>>>>>> feat(articles) user can favorite article
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
 

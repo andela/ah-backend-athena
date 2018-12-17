@@ -3,24 +3,17 @@ from rest_framework import serializers
 from rest_framework import status, exceptions
 from ..authentication.models import User
 from ..profiles.serializers import ProfileSerializer
-<<<<<<< HEAD
 from .relations import TagField
-=======
->>>>>>> feat(articles) user can favorite article
 
 from .models import(
     Article,
     ArticleImg,
-<<<<<<< HEAD
-     Tag
-=======
+    Tag,
     Favourites,
->>>>>>> feat(articles) user can favorite article
 )
 
 
 class ArticleImgSerializer(serializers.ModelSerializer):
-<<<<<<< HEAD
 
     class Meta:
         model = ArticleImg
@@ -38,50 +31,18 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
     tagList = TagField(many=True, required=False, source='tags')
 
     class Meta:
-=======
-
-    class Meta:
-        model = ArticleImg
-        fields = ['id', 'image_url', 'description']
-
-
-class CreateArticleViewSerializer(serializers.ModelSerializer):
-    author = ProfileSerializer(read_only=True)
-    image = ArticleImgSerializer(read_only=True)
-    """
-    slug = serializers.SlugField(read_only=True)
-    created_at = serializers.DateTimeField(read_only=True)
-    updated_at = serializers.DateTimeField(read_only=True)
-    """
-    class Meta:
->>>>>>> feat(articles) user can favorite article
         model = Article
         """
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-<<<<<<< HEAD
         fields = ['id', 'title', 'body', 'description', 'image','tagList',
-         'author', 'slug', 'published', 'created_at', 'updated_at', ]
-=======
-        
-        fields = [
-            'id', 'title', 'body', 'description', 'image',
-            'author', 'slug', 'published', 'created_at','updated_at', 
-            'favourited', 'favouriteCount'
-        ]
+         'author', 'slug', 'published', 'created_at', 'updated_at']
 
-class UpdateArticleViewSerializer(serializers.ModelSerializer):
-    author = ProfileSerializer(read_only=True)
-    image = ArticleImgSerializer(read_only=False)
->>>>>>> feat(articles) user can favorite article
-
-    class Meta:
-        model = Article
         """
-        List the fields as in create articals serializer
+        Overide the validate methods to include validatiosn for 
+        different fields
         """
-<<<<<<< HEAD
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
         article = Article.objects.create(**validated_data)
@@ -133,9 +94,6 @@ class TagsSerializer(serializers.ModelSerializer):
     def get_article(self, instance):
         return instance.slug
 
-=======
-        fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', ' updated_at', ' updated_at']
 
 
 class FavouriteSerializer(serializers.ModelSerializer):
@@ -145,4 +103,3 @@ class FavouriteSerializer(serializers.ModelSerializer):
         fields = [
             'article', 'favourite', 'profile'
         ]
->>>>>>> feat(articles) user can favorite article

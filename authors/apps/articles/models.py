@@ -15,11 +15,7 @@ class Article(models.Model):
     identifies an article with a certain user.
     """
 
-<<<<<<< HEAD
-    """Every modle a title ield"""
-=======
     """Every model has a title field"""
->>>>>>> feat(articles) user can favorite article
     title = models.CharField(db_index=True, max_length=255)
 
     """The author field identifies an article with a certain user."""
@@ -66,21 +62,12 @@ class Article(models.Model):
 
     objects = models.Manager()
 
-<<<<<<< HEAD
     class Meta:
         ordering = ["-created_at", "-updated_at"]
 
 class Tag(models.Model):
     tag = models.CharField(max_length=255)
     slug = models.SlugField(db_index=True, unique=True)
-    
-=======
-    def __str__(self):
-        return self.title
-
-    class Meta:
-        ordering = ["-created_at", "-updated_at"]
-
     
 
 class Favourites(models.Model):
@@ -99,4 +86,3 @@ class Favourites(models.Model):
     False
     """
     favourite = models.BooleanField(default=False)
->>>>>>> feat(articles) user can favorite article
