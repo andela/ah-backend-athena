@@ -31,14 +31,15 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     """
+    tagList = TagField(many=True, required=False, source='tags')
     class Meta:
         model = Article
         """
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
+        fields = ['id', 'title', 'body', 'description', 'image','tagList',
+         'author', 'slug', 'published', 'created_at', 'updated_at']
 
 
     def create(self, validated_data):

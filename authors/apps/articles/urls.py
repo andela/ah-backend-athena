@@ -1,5 +1,4 @@
 from django.urls import path
-<<<<<<< HEAD
 from rest_framework.routers import DefaultRouter
 
 
@@ -17,25 +16,6 @@ urlpatterns = [
     path('articles/<str:slug>/', CreateArticleView.as_view()),
     path('articles/', CreateArticleView.as_view(), name='article-create'),
     path('<slug>/tags/',ArticleTagsAPIView.as_view(), name='article-tags'),
-<<<<<<< HEAD
     path('<slug>/tags/<tag>/', ArticleDeleteAPIView.as_view(), name='delete-tag' ),
     path('articles/<slug>/favorite/', FavouritesView.as_view())
 ]
-=======
-    path('<slug>/tags/<tag>/', ArticleDeleteAPIView.as_view(), name='delete-tag' )
-]
-=======
-
-from .views import(
-    CreateArticleView,
-    RetrieveArticlesAPIView
-)
-
-urlpatterns = [
-    path('articles', RetrieveArticlesAPIView.as_view(), name='article-create'),
-    path('articles/', CreateArticleView.as_view()),
-    path('articles/<str:slug>/', CreateArticleView.as_view()),
-
-]
->>>>>>> feat(Articles): Users can can create articles
->>>>>>> feat(Articles): Users can can create articles

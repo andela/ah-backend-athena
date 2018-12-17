@@ -32,7 +32,6 @@ class ProfileRetrieveView(RetrieveAPIView):
         serializer = self.serializer_class(profile)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-<<<<<<< HEAD
 
 
 class FollowAPIView(GenericAPIView):
@@ -181,5 +180,3 @@ class FollowersAPIView(GenericAPIView):
         res = {"followers": profiles}
 
         return Response(res, status=status.HTTP_200_OK)
-=======
->>>>>>> feat(articals): Users can create articles

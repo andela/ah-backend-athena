@@ -55,6 +55,7 @@ class BaseTestArticles(APITestCase):
             }
         }
 
+
         self.updated_article = {
 
             "article": {
@@ -68,6 +69,7 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
+        
 
         self.article_log_tile = {
 
@@ -94,6 +96,7 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
+
         self.article_big_body = {
 
             "article": {
@@ -106,7 +109,7 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
-        
+
         self.updated_article = {
 
             "article": {
@@ -119,6 +122,7 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
+        
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
 
