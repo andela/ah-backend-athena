@@ -86,3 +86,31 @@ class Favourites(models.Model):
     False
     """
     favourite = models.BooleanField(default=False)
+
+class Comments(models.Model):
+    """ 
+    This model implements adding comments to
+    the user article
+    """
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment_body = models.TextField(null=False, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.comment_body
+
+    class Meta:
+        get_latest_by = ['created_at']
+
+    def children(self):
+        return Comments.objects.filter(parent=self)
+
+    @property
+    def is_parent(self):
+        if self.parent is not None:
+            return False
+        return True
+    
