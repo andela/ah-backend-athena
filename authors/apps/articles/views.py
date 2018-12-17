@@ -23,6 +23,7 @@ from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
 <<<<<<< HEAD
+<<<<<<< HEAD
 from .models import ArticleImg, Article, Tag, Favourites
 =======
 <<<<<<< HEAD
@@ -31,10 +32,14 @@ from .models import ArticleImg, Article, Tag
 from .models import ArticleImg, Article, Likes
 >>>>>>> feat(like_dislike): impliment like article and links to the endpoint
 >>>>>>> feat(like_dislike): impliment like article and links to the endpoint
+=======
+from .models import ArticleImg, Article, Tag, Likes
+>>>>>>>  feat(like_dislike): resolve conflicts
 from ..profiles.models import Profile
 
 from .serializers import(
     CreateArticleViewSerializer,
+<<<<<<< HEAD
     ArticleImgSerializer,
 <<<<<<< HEAD
     TagsSerializer,
@@ -50,6 +55,12 @@ from .serializers import(
 
 >>>>>>> feat(like_dislike): impliment like article and links to the endpoint
 )
+=======
+    ArticleImgSerializer,TagsSerializer,
+    UpdateArticleViewSerializer, LikeArticleViewSerializer
+
+)
+>>>>>>>  feat(like_dislike): resolve conflicts
 
 class CreateArticleView(GenericAPIView):
         
@@ -189,7 +200,6 @@ class RetrieveArticlesAPIView(GenericAPIView):
             article_list.append(CreateArticleViewSerializer(art).data)
         return Response(article_list, status=status.HTTP_200_OK)
 
-<<<<<<< HEAD
 class ArticleTagsAPIView(GenericAPIView):
     queryset = Tag.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -223,6 +233,7 @@ class ArticleDeleteAPIView(GenericAPIView):
         output = TagsSerializer(article)
         return Response(output.data)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     
 class FavouritesView(GenericAPIView):
@@ -327,6 +338,8 @@ class FavouritesView(GenericAPIView):
         
 =======
 =======
+=======
+>>>>>>>  feat(like_dislike): resolve conflicts
 
 class LikeArticleView(GenericAPIView):
     def post(self, request, slug):
@@ -392,5 +405,8 @@ class LikeArticleView(GenericAPIView):
             serializer.save(article=current_article, profile= profile)
         
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+<<<<<<< HEAD
 >>>>>>> feat(like_dislike): impliment like article and links to the endpoint
 >>>>>>> feat(like_dislike): impliment like article and links to the endpoint
+=======
+>>>>>>>  feat(like_dislike): resolve conflicts

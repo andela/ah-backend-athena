@@ -70,7 +70,20 @@ class BaseTestArticles(APITestCase):
             }
         }
         
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+        self.article_log_tile = {
+
+            "article": {
+                "title": "How to  train your dragon"*200,
+                "description": "Ever wonder how?",
+                "body": "You have to believe",
+=======
+=======
+>>>>>>>  feat(like_dislike): resolve conflicts
+>>>>>>>  feat(like_dislike): resolve conflicts
         self.article_log_tile = {
 
             "article": {
@@ -96,6 +109,11 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>>  feat(like_dislike): resolve conflicts
 
         self.article_big_body = {
 
@@ -122,7 +140,16 @@ class BaseTestArticles(APITestCase):
                 }
             }
         }
+<<<<<<< HEAD
         
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> feat(articals): Users can create articles
+>>>>>>> feat(articals): Users can create articles
+=======
+>>>>>>>  feat(like_dislike): resolve conflicts
+>>>>>>>  feat(like_dislike): resolve conflicts
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
 
