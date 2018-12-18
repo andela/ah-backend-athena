@@ -6,6 +6,7 @@ from ..profiles.serializers import ProfileSerializer
 from .relations import TagField
 
 from .models import(
+
     Article,
     ArticleImg,
     Tag,
@@ -13,30 +14,22 @@ from .models import(
 )
 
 
-class ArticleImgSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ArticleImg
-        fields = ['id', 'image_url', 'description']
-
-
 class CreateArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
-    image = ArticleImgSerializer(read_only=True)
+    tagList = TagField(many=True, required=False, source='tags')
     """
     slug = serializers.SlugField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     """
-    tagList = TagField(many=True, required=False, source='tags')
     class Meta:
         model = Article
         """
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['id', 'title', 'body', 'description', 'image','tagList',
-         'author', 'slug', 'published', 'created_at', 'updated_at', ]
+        fields = ['title', 'body', 'description', 'tagList',
+                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
@@ -44,12 +37,11 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
 
         for each in tags:
             article.tags.add(each)
-            
+
         return article
 
-    
     def update(self, instance, validated_data):
-   
+
         tags = validated_data.pop('tags', [])
 
         instance.tags.clear()
@@ -64,17 +56,28 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         return instance
 
 
-class UpdateArticleViewSerializer(serializers.ModelSerializer):
+class ArticleImgSerializer(serializers.ModelSerializer):
+    article = CreateArticleViewSerializer(read_only=True)
+    image_url = serializers.URLField()
+    description = serializers.CharField()
+
+    class Meta:
+        model = ArticleImg
+        fields = ['image_url', 'description',
+                  'position_in_body_before', 'article']
+
+
+class UpdateRetrieveArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
-    image = ArticleImgSerializer(read_only=False)
 
     class Meta:
         model = Article
         """
-        List the fields as in create articals serializer
+        List all of the fields that could possibly be included in a request
+        or response, this includes fields specified explicitly above.
         """
-        fields = ['id', 'title', 'body', 'description', 'image',
-                  'author', 'slug', 'published', ' updated_at', ' updated_at']
+        fields = ['title', 'body', 'description',
+                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
 
 class TagsSerializer(serializers.ModelSerializer):
@@ -89,22 +92,19 @@ class TagsSerializer(serializers.ModelSerializer):
         return instance.slug
 
 
-
-
 class FavouriteSerializer(serializers.ModelSerializer):
     article = CreateArticleViewSerializer(read_only=True)
+
     class Meta:
         model = Favourites
         fields = [
             'article', 'favourite', 'profile'
         ]
 
-        
 
 class LikeArticleViewSerializer(serializers.ModelSerializer):
     article = CreateArticleViewSerializer(read_only=True)
 
     class Meta:
         model = Likes
-        fields = ['id','article', 'profile', 'like']
-
+        fields = ['id', 'article', 'profile', 'like']

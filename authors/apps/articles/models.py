@@ -4,10 +4,6 @@ from ..profiles.models import Profile
 from django.db import models
 from django.template.defaultfilters import slugify
 
-class ArticleImg(models.Model):
-    image_url = models.URLField(blank=True, null=True)
-    description = models.CharField(db_index=True, max_length=255)
-
 
 class Article(models.Model):
     """
@@ -19,13 +15,10 @@ class Article(models.Model):
     title = models.CharField(db_index=True, max_length=255)
 
     """The author field identifies an article with a certain user."""
-    author = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
     """The body field is the actual body of the article."""
     body = models.TextField(db_index=True)
-
-    """An article can have images in the body"""
-    image = models.ForeignKey(ArticleImg, on_delete=models.CASCADE)
 
     """A description contains what the article is about"""
     description = models.CharField(db_index=True, max_length=255, null=True)
@@ -40,9 +33,10 @@ class Article(models.Model):
     and save them to draft before publishing them
     """
     published = models.BooleanField(default=False)
+
     """
-    An article can have many tags and the reverse is true
-    """
+       An article can have many tags and the reverse is true
+       """
 
     tags = models.ManyToManyField('articles.Tag', related_name='articles')
 
@@ -50,7 +44,6 @@ class Article(models.Model):
     created at and updated at fiedls track the authors
     edit history of the article
     """
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     """
@@ -63,13 +56,24 @@ class Article(models.Model):
 
     objects = models.Manager()
 
+    def __str__(self):
+        return self.title
+
     class Meta:
         ordering = ["-created_at", "-updated_at"]
+
+
+class ArticleImg(models.Model):
+    image_url = models.URLField(blank=True, null=True)
+    description = models.CharField(db_index=True, max_length=255)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    position_in_body_before = models.IntegerField(null=True)
+
 
 class Tag(models.Model):
     tag = models.CharField(max_length=255)
     slug = models.SlugField(db_index=True, unique=True)
-    
+
 
 class Favourites(models.Model):
     """
@@ -81,12 +85,14 @@ class Favourites(models.Model):
     this fields contains the id of the article
     being favourited
     """
-    article = models.ForeignKey(Article, related_name="article_id", on_delete=models.CASCADE, null=True)
+    article = models.ForeignKey(
+        Article, related_name="article_id", on_delete=models.CASCADE, null=True)
     """
     this fields the favourite value, either True or
     False
     """
     favourite = models.BooleanField(default=False)
+
 
 class Comments(models.Model):
     """ 
@@ -97,7 +103,8 @@ class Comments(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     comment_body = models.TextField(null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -114,14 +121,14 @@ class Comments(models.Model):
         if self.parent is not None:
             return False
         return True
-    
-        
+
+
 class Likes(models.Model):
-   """ 
-   Adds relationship to articles
-   """
-   article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    """ 
+    Adds relationship to articles
+    """
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
 
-   profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
-   like = models.BooleanField()
+    like = models.BooleanField()

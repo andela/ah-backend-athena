@@ -21,11 +21,18 @@ class BaseTestArticles(APITestCase):
         self.roni = self.save_user('roni', 'roni@a.com', 'P@ssword23lslsn')
         self.sama = self.save_user('sama', 'samantha@a.com', 'P@ssword23lslsn')
 
-
         self.data = {
             "user": {
                 "email": "ar1@gmail.com",
                 "username": "henry1",
+                "password": "Password@1"
+            }
+        }
+
+        self.data3 = {
+            "user": {
+                "email": "ak1@gmail.com",
+                "username": "lhenry1",
                 "password": "Password@1"
             }
         }
@@ -39,34 +46,30 @@ class BaseTestArticles(APITestCase):
         self.article = {
 
             "article": {
-                "title": "How to  train your dragon",
+                "title": "How to  train your dragon added on the titlt",
                 "description": "Ever wonder how?",
-                "body": "You have to believe",
-                "tagList": ["reactjs", "haskell", "ruby", "rails", "magic!"],
-                "image": {
-                        "image_url": "http//url",
-                        "image_description": "image is cool"
-                }
+                "body": "You have to believe this body has beeb updated ",
+                "tagList": ["Rails", "Golang", "magic!"],
+                "images": [
+                       {
+                           "image_url": "https://imgur.comhenry/",
+                           "description": "image is cool"
+                       },
+                    {
+                           "image_url": "https://imgur.comhenry/",
+                           "description": "image is cool"
+                       },
+                    {
+                           "image_url": "https://imgur.comhenry/",
+                           "description": "image is cool"
+                       }
+                ]
             }
         }
+
         self.comment = {
             "comment": {
-            "comment_body": "Hey, this is another comment for you "	
-            }
-        }
-
-
-        self.updated_article = {
-
-            "article": {
-                "title": "How to  train your dragon updated",
-                "description": "Ever wonder how ggggg?",
-                "body": "You have to believe",
-                "tagList": ["reactjs", "angularjs", "dragons"],
-                "image": {
-                        "image_url": "http//url",
-                        "image_description": "image is cooljjjj"
-                }
+                "comment_body": "Hey, this is another comment for you "
             }
         }
 
@@ -76,10 +79,10 @@ class BaseTestArticles(APITestCase):
                 "title": "How to  train your dragon"*200,
                 "description": "Ever wonder how?",
                 "body": "You have to believe",
-                "image": {
+                "images": [{
                         "image_url": "http//url",
-                        "image_description": "image is cool"
-                }
+                        "description": "image is cool"
+                }],
             }
         }
 
@@ -89,23 +92,10 @@ class BaseTestArticles(APITestCase):
                 "title": "How to  train your dragon",
                 "description": "Ever wonder how?",
                 "body": "You have to believe"*200,
-                "image": {
-                        "image_url": "http//url",
-                        "image_description": "image is cool"
-                }
-            }
-        }
-
-        self.article_big_body = {
-
-            "article": {
-                "title": "How to  train your dragon",
-                "description": "Ever wonder how?",
-                "body": "You have to believe"*200,
-                "image": {
-                        "image_url": "http//url",
-                        "image_description": "image is cool"
-                }
+                "images": [{
+                        "image_url": "https://imgur.comdhenry/",
+                        "description": "image is cool"
+                }],
             }
         }
 
@@ -115,10 +105,11 @@ class BaseTestArticles(APITestCase):
                 "title": "How to  train your dragon updated",
                 "description": "Ever wonder how ggggg?",
                 "body": "You have to believe",
-                "image": {
-                        "image_url": "http//url",
-                        "image_description": "image is cooljjjj"
-                }
+                "images": [{
+                        "id": 1,
+                        "image_url": "https://imgur.comdhenry/",
+                        "description": "image is cooljjjj"
+                }],
             }
         }
 
@@ -130,13 +121,11 @@ class BaseTestArticles(APITestCase):
                           'email': email, 'password': pwd}
         return User.objects.create_user(**validated_data)
 
-    
     def get_samantha_token(self):
         return self.sama.token()
 
     def get_roni_token(self):
         return self.roni.token()
-
 
     def verify_account(self, token, uidb64):
         request = APIRequestFactory().get(
