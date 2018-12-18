@@ -34,3 +34,10 @@ class CommentDetailSerializer(serializers.ModelSerializer):
         if obj.is_parent:
             return ChildCommentSerializer(obj.children(), many=True).data 
         return None 
+
+class LikeCommentSerializer(serializers.ModelSerializer):
+    comment = CommentSerializer(read_only=True)
+
+    class Meta:
+        model = ComentLikes
+        fields = ['id', 'comment', 'profile', 'like']

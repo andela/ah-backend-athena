@@ -132,3 +132,11 @@ class Likes(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
     like = models.BooleanField()
+
+class ComentLikes(models.Model):
+
+    comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
+
+    like = models.BooleanField()
