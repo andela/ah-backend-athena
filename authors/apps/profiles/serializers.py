@@ -47,3 +47,6 @@ class FollowerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ['followed']
+
+
+    
