@@ -53,6 +53,8 @@ class Article(models.Model):
     favourited = models.BooleanField(default=False)
     favouriteCount = models.IntegerField(default=0)
     likes_count = models.IntegerField(default=0)
+    read_time = models.IntegerField(default=0)
+    views_count = models.IntegerField(default=0)
 
     objects = models.Manager()
 
@@ -132,3 +134,13 @@ class Likes(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
     like = models.BooleanField()
+
+class Readings(models.Model):
+    """ model for reading stats """
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    viewers = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "article_id: {}, author: {}, views: {}".format(
+            self.article, self.author, self.viewers)

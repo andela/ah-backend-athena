@@ -10,7 +10,8 @@ from .models import(
     Article,
     ArticleImg,
     Tag,
-    Favourites, Likes
+    Favourites, Likes,
+    Readings
 )
 
 
@@ -29,7 +30,8 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         or response, this includes fields specified explicitly above.
         """
         fields = ['title', 'body', 'description', 'tagList',
-                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
+                  'author', 'slug', 'published', 'created_at',
+                  'updated_at', 'read_time', 'views_count', 'likes_count' ]
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
@@ -108,3 +110,19 @@ class LikeArticleViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Likes
         fields = ['id', 'article', 'profile', 'like']
+
+class ReadingSerializer(serializers.ModelSerializer):
+    read_time = serializers.IntegerField(read_only=True)
+    likes_count = serializers.IntegerField(read_only=True)
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        article = Article.objects.all().filter().values()[0]
+        response['viewers'] = article['views_count']
+        response['read_time'] = article['read_time']
+        response['likes_count '] = article['likes_count']
+        response['article'] = article['title']
+        return response
+    class Meta:
+        model = Readings  
+        fields = ['read_time' ,'viewers', 'article', 'likes_count']
