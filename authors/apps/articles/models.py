@@ -52,7 +52,14 @@ class Article(models.Model):
     """
     favourited = models.BooleanField(default=False)
     favouriteCount = models.IntegerField(default=0)
+    """
+    this field shows how many likes an article has
+    """
     likes_count = models.IntegerField(default=0)
+    """
+    this field shows the readtime of an article
+    """
+    readTime = models.IntegerField(default=0)
 
     objects = models.Manager()
 
