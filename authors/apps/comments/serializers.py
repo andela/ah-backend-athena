@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework import status, exceptions
 from ..authentication.models import User
-from ..articles.models import Comments, Profile
+from ..articles.models import Comments, Profile, ComentLikes
 
 class CommentSerializer(serializers.ModelSerializer):
 
@@ -26,7 +26,7 @@ class CommentDetailSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField()
     class Meta:
         model = Comments
-        fields = ('id', 'author', 'comment_body', 'article', 'created_at',
+        fields = ('id', 'author', 'comment_body', 'article', 'created_at','likes_count',
             'replies', 'parent')
 
     @staticmethod
@@ -34,3 +34,10 @@ class CommentDetailSerializer(serializers.ModelSerializer):
         if obj.is_parent:
             return ChildCommentSerializer(obj.children(), many=True).data 
         return None 
+
+class LikeCommentSerializer(serializers.ModelSerializer):
+    comment = CommentSerializer(read_only=True)
+
+    class Meta:
+        model = ComentLikes
+        fields = ['id', 'comment', 'profile', 'like']
