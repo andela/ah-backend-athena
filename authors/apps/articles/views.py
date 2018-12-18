@@ -14,7 +14,8 @@ from rest_framework.generics import(
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
-    IsAuthenticatedOrReadOnly
+    IsAuthenticatedOrReadOnly,
+    IsAdminUser,
 )
 from rest_framework.response import Response
 from rest_framework import exceptions
@@ -22,8 +23,20 @@ from django.template.defaultfilters import slugify
 
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
-from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Tag, Favourites, Likes
+from .renderers import(
+    ArticleJSONRenderer,
+    ListArticlesJSONRenderer,
+    ArticleReportJSONRenderer,
+    ArticleListReportJSONRenderer
+)
+from .models import(
+    ArticleImg,
+    Article,
+    Tag,
+    Favourites,
+    Likes,
+    ReportArticle
+)
 
 from ..profiles.models import Profile
 
@@ -34,7 +47,8 @@ from .serializers import(
     ArticleImgSerializer,
     TagsSerializer,
     FavouriteSerializer,
-    LikeArticleViewSerializer
+    LikeArticleViewSerializer,
+    ReportArticleSerializer
 
 )
 
@@ -53,7 +67,6 @@ class CreateArticleView(GenericAPIView):
         """
 
         image_data = article.pop('images')
-
         slug = slugify(article["title"]).replace("_", "-")
         slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
         article["slug"] = slug
@@ -131,6 +144,7 @@ class CreateArticleView(GenericAPIView):
                     {"error": "You can only delete your own articles"},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
+
             article.delete()
         except Article.DoesNotExist:
             error = {"error": "This article doesnot exist"}
@@ -199,7 +213,7 @@ class RetrieveArticlesAPIView(GenericAPIView):
         """
          This class method is used retrieve articles
         """
-        articles = Article.objects.all()
+        articles = Article.objects.filter(published=True)
         article_list = []
         for article in list(articles):
             images = ArticleImg.objects.filter(
@@ -211,6 +225,9 @@ class RetrieveArticlesAPIView(GenericAPIView):
                 images_list.append(image)
             article['images'] = images_list
             article_list.append(article)
+        if len(article_list) == 0:
+            data = {'message': 'There are no articles articles'}
+            return Response({"articles": data}, status=status.HTTP_404_NOT_FOUND)
         return Response(article_list, status=status.HTTP_200_OK)
 
 
@@ -412,3 +429,98 @@ class LikeArticleView(GenericAPIView):
             serializer.save(article=current_article, profile=profile)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ReporteArticleAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleReportJSONRenderer,)
+    serializer_class = ReportArticleSerializer
+
+    def post(self, request, *args, **kwargs):
+
+        user_data = JWTAuthentication().authenticate(request)
+        profile = Profile.objects.get(user__id=user_data[0].id)
+        slug = kwargs['slug']
+        report = request.data.get('report', {})
+        if report == {}:
+            return Response(
+                {"errors": "Provide reason for reporting"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            article_ob = Article.objects.get(
+                slug=slug
+            )
+        except Article.DoesNotExist:
+            return Response(
+                {"errors": "This article doesnot exist"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        reported_articles = ReportArticle.objects.filter(
+            article_id=article_ob.id)
+        if len(list(reported_articles)) >= 5:
+            article_ob.published = False
+            article_ob.save()
+            return Response(
+                data={
+                    "errors": "This article has been reported more than 5 times"
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+
+        serializer = self.serializer_class(data=report, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            article_id=article_ob,
+            article_slug=article_ob,
+            reported_by=profile
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ReportedArticleListAPIView(GenericAPIView):
+    serializer_class = ReportArticleSerializer
+    renderer_classes = (ArticleListReportJSONRenderer,)
+    permission_classes = (IsAuthenticated, IsAdminUser)
+
+    def get(self, request):
+        queryset = ReportArticle.objects.filter()
+        serializer = self.serializer_class(queryset, many=True)
+        data = serializer.data
+        if len(data) == 0:
+            data = {'message': 'There are no reported articles'}
+            return Response({"articles": data},
+                            status=status.HTTP_404_NOT_FOUND)
+        return Response({"articles": data}, status=status.HTTP_200_OK)
+
+    def put(self, request, slug):
+        """Revert mistakenly reported articles
+        """
+        try:
+            article = Article.objects.get(slug=slug)
+            article.published = True
+            article.save()
+        except Article.DoesNotExist:
+            error = {"error": "This article doesnot exist"}
+            return Response(error, status=status.HTTP_404_NOT_FOUND)
+
+        reported_article = ReportArticle.objects.filter(
+            article_id=article.id)
+        reported_article.delete()
+
+        data = {"message": "article restored successully"}
+        return Response({"reported": data}, status=status.HTTP_200_OK)
+
+    def delete(self, request, slug):
+        """Permernebtly delete article from database which
+           has been verified to violate terms
+        """
+        try:
+            article = Article.objects.get(slug=slug)
+        except Article.DoesNotExist:
+            error = {"error": "This article doesnot exist"}
+            return Response({"reported": error},
+                            status=status.HTTP_404_NOT_FOUND)
+        article.delete()
+        data = {"message": "article was deleted successully"}
+        return Response({"reported": data}, status=status.HTTP_200_OK)

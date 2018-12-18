@@ -10,7 +10,9 @@ from .models import(
     Article,
     ArticleImg,
     Tag,
-    Favourites, Likes
+    Favourites,
+    Likes,
+    ReportArticle,
 )
 
 
@@ -28,7 +30,7 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['title', 'body', 'description', 'tagList',
+        fields = ['id', 'title', 'body', 'description', 'tagList',
                   'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
     def create(self, validated_data):
@@ -63,7 +65,7 @@ class ArticleImgSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ArticleImg
-        fields = ['image_url', 'description',
+        fields = ['id', 'image_url', 'description',
                   'position_in_body_before', 'article']
 
 
@@ -76,7 +78,7 @@ class UpdateRetrieveArticleViewSerializer(serializers.ModelSerializer):
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['title', 'body', 'description',
+        fields = ['id', 'title', 'body', 'description',
                   'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
 
@@ -108,3 +110,14 @@ class LikeArticleViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Likes
         fields = ['id', 'article', 'profile', 'like']
+
+
+class ReportArticleSerializer(serializers.ModelSerializer):
+    reported_by = ProfileSerializer(read_only=True)
+    reported_at = serializers.DateTimeField(read_only=True)
+    reason = serializers.CharField()
+
+    class Meta:
+        model = ReportArticle
+        fields = ['article_id', 'article_slug',
+                  'reported_by', 'reason', 'reported_at', ]

@@ -13,15 +13,15 @@ class ArticleJSONRenderer(JSONRenderer):
         the default JSONRenderer to handle rendering errors, so we need to
         check for this case.
         """
-      
+
         errors = data.get('errors', None)
 
         if errors is not None:
             """
             As mentioned about, we will let the default JSONRenderer handle
             rendering errors.
-            return super(ArticlesJSONRenderer, self).render(data)
             """
+            return super(ArticleJSONRenderer, self).render(data)
         """Finally, we can render our data under the "user" namespace."""
         return json.dumps({
             'article': data
@@ -38,3 +38,33 @@ class ListArticlesJSONRenderer(JSONRenderer):
         })
 
 
+class ArticleReportJSONRenderer(JSONRenderer):
+    charset = 'utf-8'
+
+    def render(self, data, media_type=None, renderer_context=None):
+
+        errors = data.get('errors', None)
+
+        if errors is not None:
+
+            return super(ArticleReportJSONRenderer, self).render(data)
+
+        return json.dumps({
+            'reported': data
+        })
+
+
+class ArticleListReportJSONRenderer(JSONRenderer):
+    charset = 'utf-8'
+
+    def render(self, data, media_type=None, renderer_context=None):
+
+        errors = data.get('errors', None)
+
+        if errors is not None:
+
+            return super(ArticleListReportJSONRenderer, self).render(data)
+
+        return json.dumps({
+            'reported': data
+        })
