@@ -127,12 +127,22 @@ class LikeCommentsView(GenericAPIView):
     serializer_class = CommentDetailSerializer
 
     def post(self, request, slug, id):
-        comment_qs = Comments.objects.all().filter(id=id)
+        comment_qs = Comments.objects.all().filter(id=id).filter(article__slug=slug)
         comment = comment_qs.first()
+        if comment is None:
+            return Response(
+                {
+                    "error":{ 
+                    "body":[
+                        "Comment or article doesnot exist"
+                    ]}},
+                    status=status.HTTP_404_NOT_FOUND
+            )
+        
         user_id = JWTAuthentication().authenticate(request)[0].id
         profile = Profile.objects.get(user__id=user_id)
-
-        liked_comments = ComentLikes.objects.filter(comment=comment)
+    
+        liked_comments = ComentLikes.objects.filter(comment=comment).filter(profile=profile)
         if len(liked_comments) >= 1:
             user_like_option = liked_comments.first()
             if not user_like_option.like:
@@ -151,15 +161,25 @@ class LikeCommentsView(GenericAPIView):
             new_data = serializer.data 
             
         return Response({"comment": new_data}, status.HTTP_200_OK)
+        
 
     def delete(self, request, slug, id):
-        comment_qs = Comments.objects.all().filter(id=id)
+        comment_qs = Comments.objects.all().filter(id=id).filter(article__slug=slug)
         comment = comment_qs.first()
+        if comment is None:
+            return Response(
+                {
+                    "error":{ 
+                    "body":[
+                        "Comment or article doesnot exist"
+                    ]}},
+                    status=status.HTTP_404_NOT_FOUND
+            )
         user_id = JWTAuthentication().authenticate(request)[0].id
         profile = Profile.objects.get(user__id=user_id)
 
-        liked_comments = ComentLikes.objects.filter(comment=comment)
-        print(liked_comments)
+        liked_comments = ComentLikes.objects.filter(comment=comment).filter(profile=profile)
+        
         if len(liked_comments) >= 1:
             user_like_option = liked_comments.first()
             if  user_like_option.like:
