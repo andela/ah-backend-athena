@@ -19,11 +19,11 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework import exceptions
 from django.template.defaultfilters import slugify
-
+from authors.settings import RPD
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Tag, Favourites, Likes
+from .models import ArticleImg, Article, Tag, Favourites, Likes, Readings
 
 from ..profiles.models import Profile
 
@@ -34,7 +34,8 @@ from .serializers import(
     ArticleImgSerializer,
     TagsSerializer,
     FavouriteSerializer,
-    LikeArticleViewSerializer
+    LikeArticleViewSerializer,
+    ReadingSerializer
 
 )
 
@@ -57,7 +58,10 @@ class CreateArticleView(GenericAPIView):
         slug = slugify(article["title"]).replace("_", "-")
         slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
         article["slug"] = slug
-
+        full_article = "{} {}".format(article['title'], article['body'])
+        words = full_article.split()
+        minutes = (len(words)//RPD)
+        article['read_time'] = int(minutes)
         current_user = User.objects.all().filter(
             email=request.user).values()[0]
         user_id = current_user['id']
@@ -69,7 +73,7 @@ class CreateArticleView(GenericAPIView):
         article_body = article["body"]
         results = readtime.of_text(article_body)
         read_time = results.minutes
-        article['readTime'] = read_time
+        article['read_time'] = read_time
 
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
@@ -80,7 +84,7 @@ class CreateArticleView(GenericAPIView):
         """
         saves the readtime value to the database
         """
-        article_ob.readTime = read_time
+        article_ob.read_time = read_time
         article_ob.save()
 
         for image_obj in image_data:
@@ -115,7 +119,8 @@ class CreateArticleView(GenericAPIView):
             return Response(error, status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.serializer_class(article)
-
+        article.view_count += 1
+        article.save()
         image_list = ArticleImg.objects.all().filter(
             article_id=article.id).values()
         res = serializer.data
@@ -175,7 +180,7 @@ class CreateArticleView(GenericAPIView):
         article_body = article["body"]
         results = readtime.of_text(article_body)
         read_time = results.minutes
-        article['readTime'] = read_time
+        article['read_time'] = read_time
 
         image_data = article['images']
         for image in image_data:
@@ -203,7 +208,7 @@ class CreateArticleView(GenericAPIView):
         """
         saves the readtime value to the database
         """
-        article_ob.readTime = read_time
+        article_ob.read_time = read_time
         article_ob.save()
 
         image_list = ArticleImg.objects.all().filter(
@@ -441,3 +446,50 @@ class LikeArticleView(GenericAPIView):
             serializer.save(article=current_article, profile=profile)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ReadingView(GenericAPIView):
+    """ class view to enable viewing readers statistics """
+    serializer_class = ReadingSerializer
+
+    def do_math(self, article, count):
+        """
+        If the amount of time a user spends on an article is equal,
+        greater than article read time, or greater 1/2 the read time
+        the user is counted as to read the article. otherwise,
+        the use is not counted.
+        method returns True if the user is eligible to have 
+        read the article and False otherwise.
+        """ 
+        read_time = article.read_time
+        average = 0
+        if int(read_time) < int(count) or int(read_time) == int(count):
+            average = int(count)
+        elif int(count) != 0 and int(read_time) > int(count):
+            average = int(read_time) // 2
+        if average >= int(read_time) or int(count) > average:
+            return True
+        return False
+
+    def post(self, request, slug, count):
+        """
+         This class method updates the view counts on an article
+        """
+        article = Article.objects.filter(slug=slug).first()
+        reader = Readings.objects.filter(author=request.user.id).filter(article=article)
+        if not self.do_math(article, count):
+            return Response({"message":"read not recorded"}, status=status.HTTP_301_MOVED_PERMANENTLY)
+        if len(reader) < 1:
+            article.read_count += 1
+            article.save()
+            author = User.objects.get(id=request.user.id)
+            read_obj = Readings(author=author,article=article)
+            read_obj.save()
+            serializer = self.serializer_class(read_obj)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            serializer = self.serializer_class(reader.first())
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+
+
