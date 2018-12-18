@@ -106,6 +106,8 @@ class Comments(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now_add=True)
+    
+    likes_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.comment_body
