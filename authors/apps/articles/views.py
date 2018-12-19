@@ -19,11 +19,11 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework import exceptions
 from django.template.defaultfilters import slugify
-
+from authors.settings import RPD
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Tag, Favourites, Likes
+from .models import ArticleImg, Article, Tag, Favourites, Likes, Readings, Bookmarks
 
 from ..profiles.models import Profile
 
@@ -34,7 +34,9 @@ from .serializers import(
     ArticleImgSerializer,
     TagsSerializer,
     FavouriteSerializer,
-    LikeArticleViewSerializer
+    LikeArticleViewSerializer,
+    ReadingSerializer,
+    BookmarkSerializers
 
 )
 
@@ -57,7 +59,10 @@ class CreateArticleView(GenericAPIView):
         slug = slugify(article["title"]).replace("_", "-")
         slug = slug + "-" + str(uuid.uuid4()).split("-")[-1]
         article["slug"] = slug
-
+        full_article = "{} {}".format(article['title'], article['body'])
+        words = full_article.split()
+        minutes = (len(words)//RPD)
+        article['read_time'] = int(minutes)
         current_user = User.objects.all().filter(
             email=request.user).values()[0]
         user_id = current_user['id']
@@ -69,7 +74,7 @@ class CreateArticleView(GenericAPIView):
         article_body = article["body"]
         results = readtime.of_text(article_body)
         read_time = results.minutes
-        article['readTime'] = read_time
+        article['read_time'] = read_time
 
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
@@ -80,7 +85,7 @@ class CreateArticleView(GenericAPIView):
         """
         saves the readtime value to the database
         """
-        article_ob.readTime = read_time
+        article_ob.read_time = read_time
         article_ob.save()
 
         for image_obj in image_data:
@@ -115,7 +120,8 @@ class CreateArticleView(GenericAPIView):
             return Response(error, status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.serializer_class(article)
-
+        article.view_count += 1
+        article.save()
         image_list = ArticleImg.objects.all().filter(
             article_id=article.id).values()
         res = serializer.data
@@ -175,7 +181,7 @@ class CreateArticleView(GenericAPIView):
         article_body = article["body"]
         results = readtime.of_text(article_body)
         read_time = results.minutes
-        article['readTime'] = read_time
+        article['read_time'] = read_time
 
         image_data = article['images']
         for image in image_data:
@@ -203,7 +209,7 @@ class CreateArticleView(GenericAPIView):
         """
         saves the readtime value to the database
         """
-        article_ob.readTime = read_time
+        article_ob.read_time = read_time
         article_ob.save()
 
         image_list = ArticleImg.objects.all().filter(
@@ -441,3 +447,96 @@ class LikeArticleView(GenericAPIView):
             serializer.save(article=current_article, profile=profile)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ReadingView(GenericAPIView):
+    """ class view to enable viewing readers statistics """
+    serializer_class = ReadingSerializer
+
+    def do_math(self, article, count):
+        """
+        If the amount of time a user spends on an article is equal,
+        greater than article read time, or greater 1/2 the read time
+        the user is counted as to read the article. otherwise,
+        the use is not counted.
+        method returns True if the user is eligible to have 
+        read the article and False otherwise.
+        """ 
+        read_time = article.read_time
+        average = 0
+        if int(read_time) < int(count) or int(read_time) == int(count):
+            average = int(count)
+        elif int(count) != 0 and int(read_time) > int(count):
+            average = int(read_time) // 2
+        if average >= int(read_time) or int(count) > average:
+            return True
+        return False
+
+    def post(self, request, slug, count):
+        """
+         This class method updates the view counts on an article
+        """
+        article = Article.objects.filter(slug=slug).first()
+        reader = Readings.objects.filter(author=request.user.id).filter(article=article)
+        if not self.do_math(article, count):
+            return Response({"message":"read not recorded"}, status=status.HTTP_301_MOVED_PERMANENTLY)
+        if len(reader) < 1:
+            article.read_count += 1
+            article.save()
+            author = User.objects.get(id=request.user.id)
+            read_obj = Readings(author=author,article=article)
+            read_obj.save()
+            serializer = self.serializer_class(read_obj)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            serializer = self.serializer_class(reader.first())
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class BookmarkView(GenericAPIView):
+    serializer_class = BookmarkSerializers
+    permission_classes = (IsAuthenticated,)
+    def post(self, request, slug):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+        try:
+            article = Article.objects.get(slug=slug)
+            book = Bookmarks.objects.filter(profile=profile).filter(article=article)
+            if len(book) < 1:
+                bookmark = Bookmarks()
+                bookmark ={
+                    "article": article.id,
+                    "profile": profile.id,
+                    "article_slug": article.slug
+                }
+                serializer = self.serializer_class(data=bookmark)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data , status.HTTP_201_CREATED)
+            return Response({"message": "article was bookmarked"}, status.HTTP_301_MOVED_PERMANENTLY)
+        except:
+            return Response({"error": "Article does not exist"}, status.HTTP_404_NOT_FOUND)
+
+    def get(self, request):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+        bookmark = Bookmarks.objects.all().filter(profile=profile)
+        if len(bookmark) < 1:
+            return Response({"message": "Bookmarks not found"}, status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(bookmark, many=True)
+        new_data = serializer.data 
+        return Response({"bookmark": new_data}, status.HTTP_200_OK)          
+
+    def delete(self, request, id):
+        try:
+            book = Bookmarks.objects.get(id=id)
+            if str(request.user.username) == str(book.profile):
+                book.delete()
+                return Response({"message": "Article unbookmarked"}, status.HTTP_200_OK)
+            return Response({"message": "sorry, permission denied"}, status.HTTP_403_FORBIDDEN)
+        except:
+            return Response({"error": "bookmark does not exist"}, status.HTTP_404_NOT_FOUND)
+      
+        
+
+

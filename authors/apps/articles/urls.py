@@ -8,14 +8,20 @@ from .views import(
     ArticleTagsAPIView,
     ArticleDeleteAPIView,
     FavouritesView,
-    LikeArticleView
+    LikeArticleView,
+    ReadingView,
+    BookmarkView
 )
 
 urlpatterns = [
     path('articles', RetrieveArticlesAPIView.as_view(),),
     path('articles/<str:slug>/like/',
          LikeArticleView.as_view(), name='article-like'),
+    path('article/bookmarks/', BookmarkView.as_view()),
     path('articles/<str:slug>/', CreateArticleView.as_view()),
+    path('articles/<slug>/<count>', ReadingView.as_view(), name='reading'),
+    path('articles/<str:slug>/bookmark/', BookmarkView.as_view()),
+    path('articles/bookmark/<id>/', BookmarkView.as_view()),
     path('articles/', CreateArticleView.as_view(), name='article-create'),
     path('<slug>/tags/', ArticleTagsAPIView.as_view(), name='article-tags'),
     path('<slug>/tags/<tag>/', ArticleDeleteAPIView.as_view(), name='delete-tag'),
