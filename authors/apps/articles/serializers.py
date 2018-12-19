@@ -12,7 +12,8 @@ from .models import(
     Tag,
     Favourites, Likes,
     Readings,
-    Bookmarks
+    Bookmarks,
+    ReportArticle
 )
 
 
@@ -30,9 +31,9 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['title', 'body', 'description', 'tagList',
-                  'author', 'slug', 'published', 'created_at', 'favourited','favouriteCount',
-                  'updated_at', 'read_time', 'view_count', 'likes_count', 'read_count' ]
+        fields = ['id','title', 'body', 'description', 'tagList',
+                  'author', 'slug', 'published', 'created_at', 'updated_at','favourited','favouriteCount'
+                  ,'read_time', 'view_count', 'likes_count', 'read_count' ]
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
@@ -79,7 +80,7 @@ class UpdateRetrieveArticleViewSerializer(serializers.ModelSerializer):
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['title', 'body', 'description',
+        fields = ['id','title', 'body', 'description',
                   'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
 
@@ -137,3 +138,13 @@ class BookmarkSerializers(serializers.ModelSerializer):
     class Meta:
         model = Bookmarks
         fields = ['id', 'article', 'profile', 'article_slug']
+
+class ReportArticleSerializer(serializers.ModelSerializer):
+    reported_by = ProfileSerializer(read_only=True)
+    reported_at = serializers.DateTimeField(read_only=True)
+    reason = serializers.CharField()
+
+    class Meta:
+        model = ReportArticle
+        fields = ['article_id', 'article_slug',
+                  'reported_by', 'reason', 'reported_at', ]

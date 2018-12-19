@@ -101,6 +101,20 @@ class BaseTestArticles(APITestCase):
             }
         }
 
+        self.report_article_data = {
+
+            "report": {
+                "reason": "article contains porn"
+            }
+        }
+
+        self.report_article_data_empty_reason = {
+
+            "report": {
+                "reason": ""
+            }
+        }
+
         self.updated_article = {
 
             "article": {
