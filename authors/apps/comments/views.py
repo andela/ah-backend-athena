@@ -11,8 +11,10 @@ from rest_framework.response import Response
 from rest_framework import exceptions
 from .serializers import CommentSerializer, CommentDetailSerializer
 from ..articles.exceptions import PermisionDenied, CommentDoesNotExist
-from ..articles.models import Comments, Article
+from ..articles.models import Comments, Article, ComentLikes
 from ..articles.serializers import CreateArticleViewSerializer
+from ..profiles.models import Profile
+from ..authentication.backends import JWTAuthentication
 
 
 class CommentView(GenericAPIView):
@@ -118,5 +120,83 @@ class CommentDetailView(GenericAPIView):
                 raise PermisionDenied
         except Comments.DoesNotExist:
             raise CommentDoesNotExist
+
+class LikeCommentsView(GenericAPIView):
+    """ View class to handle liking of comments """
+    permission_classes = (IsAuthenticated, )
+    serializer_class = CommentDetailSerializer
+
+    def post(self, request, slug, id):
+        comment_qs = Comments.objects.all().filter(id=id).filter(article__slug=slug)
+        comment = comment_qs.first()
+        if comment is None:
+            return Response(
+                {
+                    "error":{ 
+                    "body":[
+                        "Comment or article doesnot exist"
+                    ]}},
+                    status=status.HTTP_404_NOT_FOUND
+            )
+        
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+    
+        liked_comments = ComentLikes.objects.filter(comment=comment).filter(profile=profile)
+        if len(liked_comments) >= 1:
+            user_like_option = liked_comments.first()
+            if not user_like_option.like:
+                comment.likes_count = comment.likes_count + 1
+                comment.save()
+            user_like_option.like = True
+            user_like_option.save()
+            serializer = self.serializer_class(comment, many=False)
+            new_data = serializer.data 
+        else:
+            comment.likes_count = comment.likes_count + 1
+            comment.save()
+            lik = ComentLikes(comment=comment,profile=profile,like=True)
+            lik.save()
+            serializer = self.serializer_class(comment, many=False)
+            new_data = serializer.data 
+            
+        return Response({"comment": new_data}, status.HTTP_200_OK)
+        
+
+    def delete(self, request, slug, id):
+        comment_qs = Comments.objects.all().filter(id=id).filter(article__slug=slug)
+        comment = comment_qs.first()
+        if comment is None:
+            return Response(
+                {
+                    "error":{ 
+                    "body":[
+                        "Comment or article doesnot exist"
+                    ]}},
+                    status=status.HTTP_404_NOT_FOUND
+            )
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+
+        liked_comments = ComentLikes.objects.filter(comment=comment).filter(profile=profile)
+        
+        if len(liked_comments) >= 1:
+            user_like_option = liked_comments.first()
+            if  user_like_option.like:
+                comment.likes_count = comment.likes_count - 1
+                comment.save()
+            user_like_option.like = False
+            user_like_option.save()
+            serializer = self.serializer_class(comment, many=False)
+            new_data = serializer.data 
+        else:
+            comment.likes_count = comment.likes_count - 1
+            comment.save()
+            lik = ComentLikes(comment=comment,profile=profile,like=False)
+            lik.save()
+            serializer = self.serializer_class(comment, many=False)
+            new_data = serializer.data 
+            
+        return Response({"comment": new_data}, status.HTTP_200_OK)
 
     

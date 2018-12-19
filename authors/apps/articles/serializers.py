@@ -28,8 +28,11 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['title', 'body', 'description', 'tagList',
-                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
+        fields = [
+            'title', 'body', 'description', 'tagList',
+            'author', 'slug', 'published', 'created_at', 'updated_at',
+            'favourited','favouriteCount','readTime',
+        ]
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])

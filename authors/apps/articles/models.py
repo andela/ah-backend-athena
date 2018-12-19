@@ -52,7 +52,14 @@ class Article(models.Model):
     """
     favourited = models.BooleanField(default=False)
     favouriteCount = models.IntegerField(default=0)
+    """
+    this field shows how many likes an article has
+    """
     likes_count = models.IntegerField(default=0)
+    """
+    this field shows the readtime of an article
+    """
+    readTime = models.IntegerField(default=0)
 
     objects = models.Manager()
 
@@ -106,6 +113,8 @@ class Comments(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now_add=True)
+    
+    likes_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.comment_body
@@ -128,6 +137,14 @@ class Likes(models.Model):
     Adds relationship to articles
     """
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
+
+    like = models.BooleanField()
+
+class ComentLikes(models.Model):
+
+    comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
