@@ -1,5 +1,5 @@
 
-import uuid
+import uuid, readtime
 from django.shortcuts import render
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework import status, exceptions
@@ -63,11 +63,25 @@ class CreateArticleView(GenericAPIView):
         user_id = current_user['id']
         profile = Profile.objects.get(user__id=user_id)
 
+        """
+        estimates the time an article should take to be read
+        """
+        article_body = article["body"]
+        results = readtime.of_text(article_body)
+        read_time = results.minutes
+        article['readTime'] = read_time
+
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
         serializer.save(author=profile)
 
         article_ob = Article.objects.get(slug=slug)
+
+        """
+        saves the readtime value to the database
+        """
+        article_ob.readTime = read_time
+        article_ob.save()
 
         for image_obj in image_data:
 
@@ -154,6 +168,15 @@ class CreateArticleView(GenericAPIView):
         user_info = JWTAuthentication().authenticate(request)
         current_user = user_info[0]
         profile = Profile.objects.get(user__id=current_user.id)
+
+        """
+        estimates the time an article should take to be read
+        """
+        article_body = article["body"]
+        results = readtime.of_text(article_body)
+        read_time = results.minutes
+        article['readTime'] = read_time
+
         image_data = article['images']
         for image in image_data:
             image_obj = ArticleImg.objects.filter(
@@ -176,6 +199,12 @@ class CreateArticleView(GenericAPIView):
         serializer.save(author=profile)
 
         article_ob = Article.objects.get(slug=slug)
+
+        """
+        saves the readtime value to the database
+        """
+        article_ob.readTime = read_time
+        article_ob.save()
 
         image_list = ArticleImg.objects.all().filter(
             article_id=article_ob.id).values()
