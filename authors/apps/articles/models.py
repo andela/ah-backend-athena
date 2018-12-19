@@ -56,10 +56,9 @@ class Article(models.Model):
     this field shows how many likes an article has
     """
     likes_count = models.IntegerField(default=0)
-    """
-    this field shows the readtime of an article
-    """
-    readTime = models.IntegerField(default=0)
+    read_time = models.IntegerField(default=0)
+    view_count = models.IntegerField(default=0)
+    read_count = models.IntegerField(default=0)
 
     objects = models.Manager()
 
@@ -149,3 +148,12 @@ class ComentLikes(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
     like = models.BooleanField()
+class Readings(models.Model):
+    """ model for reading stats """
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    read_count = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "article_id: {}, author: {}, views: {}".format(
+            self.article, self.author, self.read_count)
