@@ -23,7 +23,7 @@ from authors.settings import RPD
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Tag, Favourites, Likes, Readings
+from .models import ArticleImg, Article, Tag, Favourites, Likes, Readings, Bookmarks
 
 from ..profiles.models import Profile
 
@@ -35,7 +35,8 @@ from .serializers import(
     TagsSerializer,
     FavouriteSerializer,
     LikeArticleViewSerializer,
-    ReadingSerializer
+    ReadingSerializer,
+    BookmarkSerializers
 
 )
 
@@ -490,6 +491,52 @@ class ReadingView(GenericAPIView):
         else:
             serializer = self.serializer_class(reader.first())
             return Response(serializer.data, status=status.HTTP_200_OK)
-        
+          
+
+class BookmarkView(GenericAPIView):
+    serializer_class = BookmarkSerializers
+    permission_classes = (IsAuthenticated,)
+    def post(self, request, slug):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+        try:
+            article = Article.objects.get(slug=slug)
+            book = Bookmarks.objects.filter(profile=profile).filter(article=article)
+            if len(book) < 1:
+                bookmark = Bookmarks()
+                bookmark ={
+                    "article": article.id,
+                    "profile": profile.id,
+                    "article_slug": article.slug
+                }
+                serializer = self.serializer_class(data=bookmark)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data , status.HTTP_201_CREATED)
+            return Response({"message": "article was bookmarked"}, status.HTTP_301_MOVED_PERMANENTLY)
+        except:
+            return Response({"error": "Article does not exist"}, status.HTTP_404_NOT_FOUND)
+
+    def get(self, request):
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+        bookmark = Bookmarks.objects.all().filter(profile=profile)
+        if len(bookmark) < 1:
+            return Response({"message": "Bookmarks not found"}, status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(bookmark, many=True)
+        new_data = serializer.data 
+        return Response({"bookmark": new_data}, status.HTTP_200_OK)          
+
+    def delete(self, request, id):
+        try:
+            book = Bookmarks.objects.get(id=id)
+            if str(request.user.username) == str(book.profile):
+                book.delete()
+                return Response({"message": "Article unbookmarked"}, status.HTTP_200_OK)
+            return Response({"message": "sorry, permission denied"}, status.HTTP_403_FORBIDDEN)
+        except:
+            return Response({"error": "bookmark does not exist"}, status.HTTP_404_NOT_FOUND)
+      
+
 
 

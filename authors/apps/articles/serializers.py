@@ -11,7 +11,8 @@ from .models import(
     ArticleImg,
     Tag,
     Favourites, Likes,
-    Readings
+    Readings,
+    Bookmarks
 )
 
 
@@ -128,3 +129,11 @@ class ReadingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Readings  
         fields = ['read_time', 'article', 'likes_count', 'view_count', 'read_count']
+        
+class BookmarkSerializers(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        return response
+    class Meta:
+        model = Bookmarks
+        fields = ['id', 'article', 'profile', 'article_slug']

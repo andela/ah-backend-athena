@@ -157,3 +157,8 @@ class Readings(models.Model):
     def __str__(self):
         return "article_id: {}, author: {}, views: {}".format(
             self.article, self.author, self.read_count)
+
+class Bookmarks(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    article_slug = models.CharField(max_length=225)

@@ -4,6 +4,7 @@ from rest_framework.views import status
 from rest_framework.test import APITestCase, APIClient
 from ..models import UserManager, User
 from authors.apps.articles.models import Readings, Article, Comments
+from authors.apps.profiles.models import Follow
 
 
 class TestUsers(APITestCase):
@@ -20,6 +21,8 @@ class TestUsers(APITestCase):
             comment_body='hello', author=self.user, article=self.create_article)
         self.reading = Readings.objects.create(
             author=self.user, article=self.create_article, read_count=1)
+        self.follow = Follow.objects.create(follower=self.user, followed=self.user)
+
     
     def test_readings(self):
         self.assertTrue(self.reading)
@@ -27,6 +30,11 @@ class TestUsers(APITestCase):
 
     def test_comment_model(self):
         self.assertEqual(str(self.comment), "hello")
+        self.follow = Follow.objects.create(follower=self.user, followed=self.user)
+
+    def test_follower_model(self):
+        self.assertIn(
+            'User with id: ', str(self.follow))
 
     def test_users_is_instance_of_User(self):
         self.assertIsInstance(self.user, User)
