@@ -16,11 +16,13 @@ from .views import(
     ShareArticleOnFacebookAPIView,
     ShareArticleOnTwitterAPIView,
     ShareArticleViaMailAPIView,
-    RateArticle
+    RateArticle,
+    SearchArticlesAPIView
 )
 
 urlpatterns = [
-    path('articles', RetrieveArticlesAPIView.as_view(),),
+    path('articles/search',SearchArticlesAPIView.as_view() ),
+    path('articles', RetrieveArticlesAPIView.as_view()),
     path('articles/<str:slug>/like/',
          LikeArticleView.as_view(), name='article-like'),
     path('article/bookmarks/', BookmarkView.as_view()),
