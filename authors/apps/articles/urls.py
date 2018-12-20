@@ -13,6 +13,9 @@ from .views import(
     BookmarkView,
     ReporteArticleAPIView,
     ReportedArticleListAPIView,
+    ShareArticleOnFacebookAPIView,
+    ShareArticleOnTwitterAPIView,
+    ShareArticleViaMailAPIView
 )
 
 urlpatterns = [
@@ -36,4 +39,10 @@ urlpatterns = [
          ReportedArticleListAPIView.as_view(), name='revert-reported-aticle'),
     path('reported/',
          ReportedArticleListAPIView.as_view(), name='reported'),
+    path('articles/<slug>/share/facebook/',
+         ShareArticleOnFacebookAPIView.as_view()),
+    path('articles/<slug>/share/twitter/',
+         ShareArticleOnTwitterAPIView.as_view()),
+    path('articles/<slug>/share/email/',
+         ShareArticleViaMailAPIView.as_view())
 ]

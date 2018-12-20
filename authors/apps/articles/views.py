@@ -1,5 +1,7 @@
 
-import uuid, readtime
+import uuid
+import readtime
+import os
 from django.shortcuts import render
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework import status, exceptions
@@ -18,13 +20,23 @@ from rest_framework.permissions import (
     IsAdminUser
 )
 from rest_framework.response import Response
-from rest_framework import exceptions
 from django.template.defaultfilters import slugify
+from validate_email import validate_email
+from django.core.mail import send_mail
+from django.contrib.sites.shortcuts import get_current_site
 from authors.settings import RPD
 from ..authentication.backends import JWTAuthentication
 from ..authentication.models import User
 from .renderers import ArticleJSONRenderer, ListArticlesJSONRenderer
-from .models import ArticleImg, Article, Tag, Favourites, Likes, Readings, Bookmarks
+from .share import ShareArticle
+from .exceptions import (
+    MissingAccessTokenInRequestException,
+    MissingTwitterTokensInRequestException,
+    TwitterTokenInputsFormatError,
+    MissingEmailInRequestBodyException,
+    InvalidEmailAddress,
+    FailedToSendEmailException,
+)
 from .renderers import(
     ArticleJSONRenderer,
     ListArticlesJSONRenderer,
@@ -39,12 +51,12 @@ from .models import(
     Favourites,
     Likes,
     Readings,
-    ReportArticle
+    ReportArticle,
+    Bookmarks,
+    Shares
 )
 
 from ..profiles.models import Profile
-
-
 from .serializers import(
     CreateArticleViewSerializer,
     UpdateRetrieveArticleViewSerializer,
@@ -54,8 +66,10 @@ from .serializers import(
     LikeArticleViewSerializer,
     ReadingSerializer,
     BookmarkSerializers,
-    ReportArticleSerializer
-
+    ReportArticleSerializer,
+    FacebookShareSeriaizer,
+    TwitterShareSeriaizer,
+    EmailShareSeriaizer
 )
 
 
@@ -253,6 +267,7 @@ class RetrieveArticlesAPIView(GenericAPIView):
             data = {'message': 'There are no articles articles'}
             return Response({"articles": data}, status=status.HTTP_404_NOT_FOUND)
         return Response(article_list, status=status.HTTP_200_OK)
+
 
 class ArticleTagsAPIView(GenericAPIView):
     queryset = Tag.objects.all()
@@ -466,7 +481,7 @@ class ReadingView(GenericAPIView):
         the use is not counted.
         method returns True if the user is eligible to have 
         read the article and False otherwise.
-        """ 
+        """
         read_time = article.read_time
         average = 0
         if int(read_time) < int(count) or int(read_time) == int(count):
@@ -482,34 +497,37 @@ class ReadingView(GenericAPIView):
          This class method updates the view counts on an article
         """
         article = Article.objects.filter(slug=slug).first()
-        reader = Readings.objects.filter(author=request.user.id).filter(article=article)
+        reader = Readings.objects.filter(
+            author=request.user.id).filter(article=article)
         if not self.do_math(article, count):
-            return Response({"message":"read not recorded"}, status=status.HTTP_301_MOVED_PERMANENTLY)
+            return Response({"message": "read not recorded"}, status=status.HTTP_301_MOVED_PERMANENTLY)
         if len(reader) < 1:
             article.read_count += 1
             article.save()
             author = User.objects.get(id=request.user.id)
-            read_obj = Readings(author=author,article=article)
+            read_obj = Readings(author=author, article=article)
             read_obj.save()
             serializer = self.serializer_class(read_obj)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             serializer = self.serializer_class(reader.first())
             return Response(serializer.data, status=status.HTTP_200_OK)
-          
+
 
 class BookmarkView(GenericAPIView):
     serializer_class = BookmarkSerializers
     permission_classes = (IsAuthenticated,)
+
     def post(self, request, slug):
         user_id = JWTAuthentication().authenticate(request)[0].id
         profile = Profile.objects.get(user__id=user_id)
         try:
             article = Article.objects.get(slug=slug)
-            book = Bookmarks.objects.filter(profile=profile).filter(article=article)
+            book = Bookmarks.objects.filter(
+                profile=profile).filter(article=article)
             if len(book) < 1:
                 bookmark = Bookmarks()
-                bookmark ={
+                bookmark = {
                     "article": article.id,
                     "profile": profile.id,
                     "article_slug": article.slug
@@ -517,7 +535,7 @@ class BookmarkView(GenericAPIView):
                 serializer = self.serializer_class(data=bookmark)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-                return Response(serializer.data , status.HTTP_201_CREATED)
+                return Response(serializer.data, status.HTTP_201_CREATED)
             return Response({"message": "article was bookmarked"}, status.HTTP_301_MOVED_PERMANENTLY)
         except:
             return Response({"error": "Article does not exist"}, status.HTTP_404_NOT_FOUND)
@@ -529,8 +547,8 @@ class BookmarkView(GenericAPIView):
         if len(bookmark) < 1:
             return Response({"message": "Bookmarks not found"}, status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(bookmark, many=True)
-        new_data = serializer.data 
-        return Response({"bookmark": new_data}, status.HTTP_200_OK)          
+        new_data = serializer.data
+        return Response({"bookmark": new_data}, status.HTTP_200_OK)
 
     def delete(self, request, id):
         try:
@@ -541,7 +559,6 @@ class BookmarkView(GenericAPIView):
             return Response({"message": "sorry, permission denied"}, status.HTTP_403_FORBIDDEN)
         except:
             return Response({"error": "bookmark does not exist"}, status.HTTP_404_NOT_FOUND)
-      
 
 
 class ReporteArticleAPIView(GenericAPIView):
@@ -590,6 +607,7 @@ class ReporteArticleAPIView(GenericAPIView):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class ReportedArticleListAPIView(GenericAPIView):
     serializer_class = ReportArticleSerializer
     renderer_classes = (ArticleListReportJSONRenderer,)
@@ -636,6 +654,166 @@ class ReportedArticleListAPIView(GenericAPIView):
         article.delete()
         data = {"message": "article was deleted successully"}
         return Response({"reported": data}, status=status.HTTP_200_OK)
-        
 
 
+class ShareArticleOnFacebookAPIView(GenericAPIView):
+    """
+    This handles the sharing of articles to facebook
+    """
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = CreateArticleViewSerializer
+
+    def post(self, request, *args, **kwargs):
+        """
+        handles a post request made to the share via facebook view
+        """
+        user = JWTAuthentication().authenticate(request)[0]
+        article_slug = kwargs['slug']
+        try:
+            article = Article.objects.get(slug=article_slug)
+        except Article.DoesNotExist:
+            raise exceptions.NotFound('This article does not exist.')
+
+        base_url = get_current_site(request)
+        facebook_share_url_base = 'https://www.facebook.com/sharer/sharer.php?u='
+        share_article_url = "{}https://{}/api/articles/{}/".format(
+            facebook_share_url_base, base_url, article_slug)
+        res = {}
+        res['facebook_link'] = share_article_url
+
+        article.facebook_shares += 1
+        article.save()
+        facebook_share = Shares()
+        facebook_share.article = article
+        facebook_share.user = user
+        facebook_share.platform = "facebook"
+        facebook_share.save()
+
+        serializer = self.serializer_class(article)
+
+        image_list = ArticleImg.objects.filter(
+            article_id=article.pk).values()
+        images_list = []
+        for image in list(image_list):
+            image.pop('article_id')
+            images_list.append(image)
+        data = serializer.data
+        data['images'] = images_list
+        res['article'] = data
+        return Response(res,
+                        status=status.HTTP_201_CREATED)
+
+
+class ShareArticleOnTwitterAPIView(GenericAPIView):
+    """
+    This handles the sharing of articles to twitter
+    """
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = CreateArticleViewSerializer
+
+    def post(self, request, *args, **kwargs):
+        """
+        handles a post request made to the share via facebook view
+        """
+        user = JWTAuthentication().authenticate(request)[0]
+        article_slug = kwargs['slug']
+        try:
+            article = Article.objects.get(slug=article_slug)
+        except Article.DoesNotExist:
+            raise exceptions.NotFound('This article does not exist.')
+
+        tokens = request.data.get('tokens')
+        if tokens is None:
+            raise MissingTwitterTokensInRequestException
+        if len(tokens.split(' ')) < 2:
+            raise TwitterTokenInputsFormatError
+        base_url = get_current_site(request)
+        article_url = "https://{}/api/articles/{}/".format(
+            base_url, article_slug)
+        ShareArticle.share_via_twitter(tokens, article_url)
+
+        article.twitter_shares += 1
+        article.save()
+        twitter_share = Shares()
+        twitter_share.article = article
+        twitter_share.user = user
+        twitter_share.platform = "twitter"
+        twitter_share.save()
+
+        serializer = self.serializer_class(article)
+
+        image_list = ArticleImg.objects.filter(
+            article_id=article.pk).values()
+        images_list = []
+        for image in list(image_list):
+            image.pop('article_id')
+            images_list.append(image)
+        data = serializer.data
+        data['images'] = images_list
+        res = {}
+        res['article'] = data
+        res['success'] = "Article link shared to twitter"
+        return Response(res,
+                        status=status.HTTP_201_CREATED)
+
+
+class ShareArticleViaMailAPIView(GenericAPIView):
+    """
+    This handles the sharing of articles via email
+    """
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = CreateArticleViewSerializer
+
+    def post(self, request, *args, **kwargs):
+        """
+        handles a post request made to the share via facebook view
+        """
+        user = JWTAuthentication().authenticate(request)[0]
+        article_slug = kwargs['slug']
+        try:
+            article = Article.objects.get(slug=article_slug)
+        except Article.DoesNotExist:
+            raise exceptions.NotFound('This article does not exist.')
+
+        send_to_email = request.data.get('send_to')
+        if send_to_email is None:
+            raise MissingEmailInRequestBodyException
+        if not validate_email(send_to_email):
+            raise InvalidEmailAddress
+
+        base_url = get_current_site(request)
+        article_url = "https://{}/api/articles/{}/".format(
+            base_url, article_slug)
+        subject = "{} was shared to you by {}".format(
+            article.title, user.email)
+        message = "Hi there, {} has shared an article with you. ".format(user.email) +\
+            "You can read it by following this link: {}".format(article_url)
+        email_from = os.getenv('EMAIL', '')
+        recipient_list = [send_to_email]
+        res = {}
+        res['success'] = "Article link sent to {}".format(send_to_email)
+        send_mail(subject=subject, message=message, from_email=email_from,
+                  recipient_list=recipient_list, fail_silently=False)
+        article.email_shares += 1
+        article.save()
+        email_share = Shares()
+        email_share.article = article
+        email_share.user = user
+        email_share.platform = "email"
+        email_share.save()
+
+        serializer = self.serializer_class(article)
+
+        image_list = ArticleImg.objects.filter(
+            article_id=article.pk).values()
+        images_list = []
+        for image in list(image_list):
+            image.pop('article_id')
+            images_list.append(image)
+        data = serializer.data
+        data['images'] = images_list
+        res['article'] = data
+        return Response(res, status=status.HTTP_201_CREATED)
