@@ -862,6 +862,7 @@ class RateArticle(GenericAPIView):
             avg.update_avg_articles_table(rated["article"], a["avg_rating"])
         
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 class ArticlesFilter(filters.FilterSet):
     tag = filters.CharFilter(field_name='tags__tag', lookup_expr='exact')
     author = filters.CharFilter(field_name='author__user__username', lookup_expr='exact')
