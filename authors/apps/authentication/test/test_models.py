@@ -22,6 +22,7 @@ class TestUsers(APITestCase):
         self.reading = Readings.objects.create(
             author=self.user, article=self.create_article, read_count=1)
         self.follow = Follow.objects.create(follower=self.user, followed=self.user)
+
     
     def test_readings(self):
         self.assertTrue(self.reading)

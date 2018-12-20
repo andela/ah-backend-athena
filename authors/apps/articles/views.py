@@ -491,7 +491,7 @@ class ReadingView(GenericAPIView):
         else:
             serializer = self.serializer_class(reader.first())
             return Response(serializer.data, status=status.HTTP_200_OK)
-
+          
 
 class BookmarkView(GenericAPIView):
     serializer_class = BookmarkSerializers
@@ -537,6 +537,6 @@ class BookmarkView(GenericAPIView):
         except:
             return Response({"error": "bookmark does not exist"}, status.HTTP_404_NOT_FOUND)
       
-        
+
 
 
