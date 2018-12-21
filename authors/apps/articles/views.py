@@ -57,6 +57,9 @@ from .models import(
 )
 
 from ..profiles.models import Profile
+
+from .pagination import StandardResultsPagination
+
 from .serializers import(
     CreateArticleViewSerializer,
     UpdateRetrieveArticleViewSerializer,
@@ -77,6 +80,7 @@ class CreateArticleView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = CreateArticleViewSerializer
+
 
     def post(self, request):
         """ The post method is used to create articles"""
@@ -246,14 +250,16 @@ class RetrieveArticlesAPIView(GenericAPIView):
 
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ListArticlesJSONRenderer,)
+    pagination_class = StandardResultsPagination
 
     def get(self, request):
         """
          This class method is used retrieve articles
         """
-        articles = Article.objects.filter(published=True)
+        articles = Article.objects.all()
+        paginated_data = self.paginate_queryset(articles)
         article_list = []
-        for article in list(articles):
+        for article in list(paginated_data):
             images = ArticleImg.objects.filter(
                 article_id=article.id).values()
             article = UpdateRetrieveArticleViewSerializer(article).data
@@ -266,7 +272,7 @@ class RetrieveArticlesAPIView(GenericAPIView):
         if len(article_list) == 0:
             data = {'message': 'There are no articles articles'}
             return Response({"articles": data}, status=status.HTTP_404_NOT_FOUND)
-        return Response(article_list, status=status.HTTP_200_OK)
+        return self.get_paginated_response(article_list)
 
 
 class ArticleTagsAPIView(GenericAPIView):
