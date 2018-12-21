@@ -12,8 +12,7 @@ from ..apps import ArticlesConfig
 from authors.apps.profiles.apps import ProfilesConfig
 from ..models import User
 from ...authentication.views import (VerifyAccount,
-                                     RegistrationAPIView
-                                     )
+                                     RegistrationAPIView)
 
 
 class BaseTestArticles(APITestCase):
@@ -194,3 +193,13 @@ class BaseTestArticles(APITestCase):
         response = self.client.post(
             '/api/articles/', data=self.article, format='json')
         return response.data['slug']
+
+    def create_article_to_share(self):
+        """
+        create & return an article that will be used for sharing
+        """
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer {}'.format(self.get_samantha_token()))
+        response = self.client.post(
+            '/api/articles/', data=self.article, format='json')
+        return response.data

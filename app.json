@@ -1,45 +1,70 @@
 {
-    "name": "ah-backend-athena",
-    "description": "Backend of a social platform for the creative at heart",
-    "repository": "https://github.com/andela/ah-backend-athena",
-    "keywords": ["python", "django", "authors", "haven", "social", "api"],
-    "env": {
-      "DB_NAME": {
-        "required": true
-      },
-      "DB_PASSWORD": {
-        "required": true
-      },
-      "DB_USER": {
-        "required": true
-      },
-      "DISABLE_COLLECTSTATIC": {
-        "required": true
-      },
-      "HOST": {
-        "required": true
-      },
-      "PORT": {
-        "required": true
-      },
-      "SECRET_KEY": {
-        "required": true
-      }
+  "name": "ah-backend-athena",
+  "description": "Backend of a social platform for the creative at heart",
+  "repository": "https://github.com/andela/ah-backend-athena",
+  "keywords": ["python", "django", "authors", "haven", "social", "api"],
+  "env": {
+    "DB_NAME": {
+      "required": true
     },
-    "formation": {
-      "web": {
-        "quantity": 1
-      }
+    "DB_PASSWORD": {
+      "required": true
     },
-    "addons": [
-      "heroku-postgresql"
-    ],
-    "scripts": {
-      "postdeploy": "python manage.py migrate --noinput"
+    "DB_USER": {
+      "required": true
     },
-    "buildpacks":[
-        {
-            "url": "heroku/python"
-        }
-    ]
-  }
+    "DISABLE_COLLECTSTATIC": {
+      "required": true
+    },
+    "HOST": {
+      "required": true
+    },
+    "PORT": {
+      "required": true
+    },
+    "DEBUG": {
+      "required": true
+    },
+    "SECRET_KEY": {
+      "required": true
+    },
+    "EMAIL": {
+      "required": true
+    },
+    "EMAIL_PASSWORD": {
+      "required": true
+    },
+    "TLS": {
+      "required": true
+    },
+    "EMAIL_PORT": {
+      "required": true
+    },
+    "TWITTER_CONSUMER_KEY": {
+      "required": true
+    },
+    "TWITTER_CONSUMER_SECRET": {
+      "required": true
+    },
+    "GOOGLE_CLIENT_ID": {
+      "required": true
+    },
+    "GOOGLE_SECRET_ID": {
+      "required": true
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "scripts": {
+    "postdeploy": "./manage makemigrations&&./manage.py migrate --noinput"
+  },
+  "buildpacks": [{
+    "url": "heroku/python"
+  }]
+}
