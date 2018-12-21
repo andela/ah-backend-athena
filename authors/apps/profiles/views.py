@@ -8,10 +8,14 @@ import json
 
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, GenericAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
-from .serializers import ProfileSerializer, FollowSerializer, FollowingSerializer, FollowerSerializer
+from .serializers import (ProfileSerializer, 
+FollowSerializer, 
+FollowingSerializer, 
+FollowerSerializer,
+)
 
 
 class ProfileRetrieveView(RetrieveAPIView):
@@ -32,7 +36,6 @@ class ProfileRetrieveView(RetrieveAPIView):
         serializer = self.serializer_class(profile)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class FollowAPIView(GenericAPIView):
     """
@@ -180,3 +183,20 @@ class FollowersAPIView(GenericAPIView):
         res = {"followers": profiles}
 
         return Response(res, status=status.HTTP_200_OK)
+
+
+class ListProfilesView(RetrieveAPIView):
+    """
+    Lists the profiles of all authors in the system.
+    """
+    permission_classes = (IsAdminUser,)
+    serializer_class = ProfileSerializer
+
+    def retrieve(self, request):
+
+        profile = Profile.objects.all()
+        serializer = self.serializer_class(profile, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+

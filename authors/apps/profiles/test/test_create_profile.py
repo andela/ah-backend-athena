@@ -19,6 +19,20 @@ class TestProfileCreate(APITestCase):
             }
         }
 
+        self.user1 = {
+            'user': {
+                'email': "kica@gmail.com",
+                'username': "kica",
+                'password': 'Sokosok1!'
+            }
+        }
+        self.user2 = {
+            'user': {
+                'email': "ntale@gmail.com",
+                'username': "shadik",
+                'password': 'Sokosok1!'
+            }
+        }
     def verify_account(self, token, uidb64):
         request = APIRequestFactory().get(
             reverse(
@@ -83,3 +97,30 @@ class TestProfileCreate(APITestCase):
             json.loads(response.content)['profile']['bio'],
             "I love andela"
         )
+
+    def create_super_user(self):
+        admin = User.objects.create_superuser(
+            'soko', 'soko@gmail.com', 'Sokosok1!')
+        response = self.client.post(
+            '/api/users/login/', self.user, format='json')
+        token = response.data['token']
+        return token
+
+    def test_get_list_of_profiles(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.create_super_user())
+        self.client.post('/api/users/', self.user1, format='json')
+        self.client.post('/api/users/', self.user2, format='json')
+        response = self.client.get('/api/profiles/')
+        profiles = json.loads(response.content)
+        self.assertEqual(len(profiles), 3)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_list_of_profiles_by_non_admin(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        self.client.post('/api/users/', self.user1, format='json')
+        self.client.post('/api/users/', self.user2, format='json')
+        response = self.client.get('/api/profiles/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+

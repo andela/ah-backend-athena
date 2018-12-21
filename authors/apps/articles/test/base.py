@@ -8,6 +8,8 @@ from rest_framework.test import (
     APIClient,
     APIRequestFactory
 )
+from ..apps import ArticlesConfig
+from authors.apps.profiles.apps import ProfilesConfig
 from ..models import User
 from ...authentication.views import (VerifyAccount,
                                      RegistrationAPIView
@@ -99,6 +101,20 @@ class BaseTestArticles(APITestCase):
             }
         }
 
+        self.report_article_data = {
+
+            "report": {
+                "reason": "article contains porn"
+            }
+        }
+
+        self.report_article_data_empty_reason = {
+
+            "report": {
+                "reason": ""
+            }
+        }
+
         self.updated_article = {
 
             "article": {
@@ -115,6 +131,14 @@ class BaseTestArticles(APITestCase):
 
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
+
+    def test_article_app_runing(self):
+        self.assertTrue(ArticlesConfig)
+        self.assertEqual(ArticlesConfig.name, 'articles')
+
+    def test_profile_app_running(self):
+        self.assertTrue(ProfilesConfig)
+        self.assertEqual(ProfilesConfig.name, 'profiles')
 
     def save_user(self, username, email, pwd):
         validated_data = {'username': username,

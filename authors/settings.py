@@ -60,7 +60,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'authors.urls'
-
+RPD = 120 #read per word
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
