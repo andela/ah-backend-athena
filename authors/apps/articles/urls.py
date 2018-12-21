@@ -10,7 +10,9 @@ from .views import(
     FavouritesView,
     LikeArticleView,
     ReadingView,
-    BookmarkView
+    BookmarkView,
+    ReporteArticleAPIView,
+    ReportedArticleListAPIView,
 )
 
 urlpatterns = [
@@ -25,5 +27,13 @@ urlpatterns = [
     path('articles/', CreateArticleView.as_view(), name='article-create'),
     path('<slug>/tags/', ArticleTagsAPIView.as_view(), name='article-tags'),
     path('<slug>/tags/<tag>/', ArticleDeleteAPIView.as_view(), name='delete-tag'),
-    path('articles/<slug>/favorite/', FavouritesView.as_view())
+    path('articles/<slug>/favorite/', FavouritesView.as_view()),
+    path('articles/<str:slug>/report/',
+         ReporteArticleAPIView.as_view(), name='report-aticle'),
+    path('reported/<str:slug>/delete/',
+         ReportedArticleListAPIView.as_view(), name='delete-reported-aticle'),
+    path('reported/<str:slug>/revert/',
+         ReportedArticleListAPIView.as_view(), name='revert-reported-aticle'),
+    path('reported/',
+         ReportedArticleListAPIView.as_view(), name='reported'),
 ]

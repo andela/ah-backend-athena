@@ -32,7 +32,7 @@ class Article(models.Model):
     Published is like a draft field, helps authors to wor
     and save them to draft before publishing them
     """
-    published = models.BooleanField(default=False)
+    published = models.BooleanField(default=True)
 
     """
        An article can have many tags and the reverse is true
@@ -162,3 +162,19 @@ class Bookmarks(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     article_slug = models.CharField(max_length=225)
+
+class ReportArticle(models.Model):
+    """This class implements a model  report articles that violate
+       terms of agreement
+    """
+    article_id = models.ForeignKey(Article, on_delete=models.CASCADE)
+    article_slug = models.ForeignKey(
+        Article, to_field="slug", db_column="slug", related_name='a_slug', on_delete=models.CASCADE, null=True)
+    reported_by = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    reason = models.CharField(db_index=True, null=False, max_length=255)
+    reported_at = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        ordering = ['-reported_at']
