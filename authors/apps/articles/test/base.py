@@ -45,6 +45,15 @@ class BaseTestArticles(APITestCase):
             }
         }
 
+        self.rate = {
+            "rating": 3
+        }
+        self.rate_wrong = {
+            "rating": 9
+        }
+        self.re_rate = {
+            "rating": 4
+        }
         self.article = {
 
             "article": {
@@ -128,7 +137,18 @@ class BaseTestArticles(APITestCase):
                 }],
             }
         }
+        self.article_log_tile = {
 
+            "article": {
+                "title": "How to  train your dragon"*200,
+                "description": "Ever wonder how?",
+                "body": "You have to believe",
+                "images": {
+                        "image_url": "http//url",
+                        "image_description": "image is cool"
+                }
+            }
+        }
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
 

@@ -13,6 +13,7 @@ from .views import(
     BookmarkView,
     ReporteArticleAPIView,
     ReportedArticleListAPIView,
+    RateArticle
 )
 
 urlpatterns = [
@@ -36,4 +37,8 @@ urlpatterns = [
          ReportedArticleListAPIView.as_view(), name='revert-reported-aticle'),
     path('reported/',
          ReportedArticleListAPIView.as_view(), name='reported'),
+    path('articles/<str:slug>/rate/', RateArticle.as_view(), name='rate-article')
+    
 ]
+
+
