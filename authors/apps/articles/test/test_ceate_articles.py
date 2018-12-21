@@ -154,6 +154,7 @@ class TestArticles(BaseTestArticles):
             'You can only delete your own articles'
         )
 
+
     def test_report_article(self):
             slug = self.create_article()
             self.client.credentials(
@@ -321,4 +322,21 @@ class TestArticles(BaseTestArticles):
             'This article doesnot exist'
         )
 
+    def test_articles_pagination(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.login_user())
+        self.client.post(
+            '/api/articles/', data=self.article, format='json')
+        self.client.post(
+            '/api/articles/', data=self.article, format='json')
+        response = self.client.get(
+            '/api/articles?page=1&limit=1',format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_page_doesnot_exist(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.login_user())
+        response = self.client.get(
+            '/api/articles?page=5',format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
