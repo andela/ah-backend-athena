@@ -3,6 +3,9 @@ import uuid
 import readtime
 import os
 from django.shortcuts import render
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework as filters
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework import status, exceptions
 from rest_framework.generics import(
@@ -248,7 +251,6 @@ class CreateArticleView(GenericAPIView):
 
 class RetrieveArticlesAPIView(GenericAPIView):
     serializer_class = UpdateRetrieveArticleViewSerializer
-
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ListArticlesJSONRenderer,)
     pagination_class = StandardResultsPagination
@@ -860,3 +862,18 @@ class RateArticle(GenericAPIView):
             avg.update_avg_articles_table(rated["article"], a["avg_rating"])
         
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+class ArticlesFilter(filters.FilterSet):
+    tag = filters.CharFilter(field_name='tags__tag', lookup_expr='exact')
+    author = filters.CharFilter(field_name='author__user__username', lookup_expr='exact')
+    keyword = filters.CharFilter(field_name='title', lookup_expr='contains')
+
+class SearchArticlesAPIView(generics.ListAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = UpdateRetrieveArticleViewSerializer
+    queryset = Article.objects.all()
+    pagination_class = StandardResultsPagination
+
+    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filterset_class = ArticlesFilter
+    search_fields = ('tags__tag', 'author__user__username', 'title', 'body', 'description')
+   
