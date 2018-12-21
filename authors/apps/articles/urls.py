@@ -15,7 +15,8 @@ from .views import(
     ReportedArticleListAPIView,
     ShareArticleOnFacebookAPIView,
     ShareArticleOnTwitterAPIView,
-    ShareArticleViaMailAPIView
+    ShareArticleViaMailAPIView,
+    RateArticle
 )
 
 urlpatterns = [
@@ -44,5 +45,6 @@ urlpatterns = [
     path('articles/<slug>/share/twitter/',
          ShareArticleOnTwitterAPIView.as_view()),
     path('articles/<slug>/share/email/',
-         ShareArticleViaMailAPIView.as_view())
+         ShareArticleViaMailAPIView.as_view()),
+    path('articles/<str:slug>/rate/', RateArticle.as_view(), name='rate-article')
 ]
