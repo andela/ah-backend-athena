@@ -85,8 +85,8 @@ class UpdateRetrieveArticleViewSerializer(serializers.ModelSerializer):
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['title', 'body', 'description', 'tagList',
-                  'author', 'slug', 'published', 'created_at', 'updated_at',]
+        fields = ['id','title', 'body', 'description', 'tagList',
+                  'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
 class TagsSerializer(serializers.ModelSerializer):
     article = serializers.SerializerMethodField()
