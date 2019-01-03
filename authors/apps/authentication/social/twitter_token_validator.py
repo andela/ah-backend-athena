@@ -1,6 +1,8 @@
+"""
+This module validates a twitter access token
+"""
 import os
 import twitter
-import json
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -13,6 +15,13 @@ class TwitterValidate:
 
     @staticmethod
     def extract_tokens(tokens):
+        """
+        This method splits the `access_token_key` and `access_token_key_secret`
+        supplied by the user they can be supplied to the function that validates
+        the twitter access token. If the split returns an array of length less than 1,
+        the method returns invalid tokens and leaves it upto the `validate_twitter_token`
+        method return None
+        """
         auth_tokens = tokens.split(' ')
         if len(auth_tokens) < 2:
             return 'invalid token', 'invalid token'
@@ -40,7 +49,6 @@ class TwitterValidate:
                 access_token_key=access_token_key,
                 access_token_secret=access_token_secret
             )
-            
             user_data_from_twitter = api.VerifyCredentials(include_email=True)
             return user_data_from_twitter.__dict__
 

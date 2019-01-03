@@ -13,7 +13,7 @@ class ArticleJSONRenderer(JSONRenderer):
         the default JSONRenderer to handle rendering errors, so we need to
         check for this case.
         """
-      
+    
         errors = data.get('errors', None)
 
         if errors is not None:
@@ -36,7 +36,6 @@ class ListArticlesJSONRenderer(JSONRenderer):
         return json.dumps({
             "articles": data,
         })
-
 
 class ArticleReportJSONRenderer(JSONRenderer):
     charset = 'utf-8'
@@ -62,5 +61,3 @@ class ArticleListReportJSONRenderer(JSONRenderer):
         return json.dumps({
             'reported': data
         })
-
-

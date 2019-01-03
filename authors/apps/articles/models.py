@@ -4,7 +4,6 @@ from ..profiles.models import Profile
 from django.db import models
 from django.template.defaultfilters import slugify
 
-
 class Article(models.Model):
     """
     This class implements an article model,the author field
@@ -21,12 +20,11 @@ class Article(models.Model):
     body = models.TextField(db_index=True)
 
     """A description contains what the article is about"""
-    description = models.CharField(db_index=True, max_length=255, null=True)
+    description = models.CharField(db_index=True, max_length=255)
 
     """. The slug field makes the article searchable it can be 
     auto generated or specified by the author."""
-    slug = models.SlugField(
-        db_index=True, max_length=255, unique=True, blank=False)
+    slug = models.SlugField(db_index=True, max_length=255, unique=True)
 
     """
     Published is like a draft field, helps authors to wor
@@ -60,10 +58,23 @@ class Article(models.Model):
     view_count = models.IntegerField(default=0)
     read_count = models.IntegerField(default=0)
 
+    """
+    sharing fields: facebook_shares, twitter_shares, email_shares
+    """
+    facebook_shares = models.IntegerField(default=0)
+    twitter_shares = models.IntegerField(default=0)
+    email_shares = models.IntegerField(default=0)
+    
+    """
+    Store the average rating for each article.
+    """
+    avg_rating = models.DecimalField(default=0, max_digits=3, decimal_places=1)
+
     objects = models.Manager()
 
     def __str__(self):
         return self.title
+    
 
     class Meta:
         ordering = ["-created_at", "-updated_at"]
@@ -101,7 +112,7 @@ class Favourites(models.Model):
 
 
 class Comments(models.Model):
-    """ 
+    """
     This model implements adding comments to
     the user article
     """
@@ -112,7 +123,7 @@ class Comments(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now_add=True)
-    
+
     likes_count = models.IntegerField(default=0)
 
     def __str__(self):
@@ -132,7 +143,7 @@ class Comments(models.Model):
 
 
 class Likes(models.Model):
-    """ 
+    """
     Adds relationship to articles
     """
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
@@ -141,6 +152,7 @@ class Likes(models.Model):
 
     like = models.BooleanField()
 
+
 class ComentLikes(models.Model):
 
     comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
@@ -148,6 +160,8 @@ class ComentLikes(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
     like = models.BooleanField()
+
+
 class Readings(models.Model):
     """ model for reading stats """
     author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -158,10 +172,12 @@ class Readings(models.Model):
         return "article_id: {}, author: {}, views: {}".format(
             self.article, self.author, self.read_count)
 
+
 class Bookmarks(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     article_slug = models.CharField(max_length=225)
+
 
 class ReportArticle(models.Model):
     """This class implements a model  report articles that violate
@@ -178,3 +194,29 @@ class ReportArticle(models.Model):
 
     class Meta:
         ordering = ['-reported_at']
+
+class Shares(models.Model):
+    """
+    This class creates a model for article shares on different platforms
+    """
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    platform = models.CharField(max_length=10)
+    
+class Ratings(models.Model):
+    """This class enables authenticated users to rate articles on a scale of 1 to 5
+    and average ratings to be returned for every article. It also allows authenticated
+     users to re-rate articles."""
+
+    """We need the slug of the article that is going to be rated
+       since it is unique.
+    """
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    """user_id of the person who rates the article has to be stored"""
+    user_id = models.IntegerField()
+
+    """this column takes the rating/score given by a user for an article."""
+    rating = models.IntegerField()

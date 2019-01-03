@@ -13,10 +13,16 @@ from .views import(
     BookmarkView,
     ReporteArticleAPIView,
     ReportedArticleListAPIView,
+    ShareArticleOnFacebookAPIView,
+    ShareArticleOnTwitterAPIView,
+    ShareArticleViaMailAPIView,
+    RateArticle,
+    SearchArticlesAPIView
 )
 
 urlpatterns = [
-    path('articles', RetrieveArticlesAPIView.as_view(),),
+    path('articles/search',SearchArticlesAPIView.as_view() ),
+    path('articles', RetrieveArticlesAPIView.as_view()),
     path('articles/<str:slug>/like/',
          LikeArticleView.as_view(), name='article-like'),
     path('article/bookmarks/', BookmarkView.as_view()),
@@ -36,4 +42,11 @@ urlpatterns = [
          ReportedArticleListAPIView.as_view(), name='revert-reported-aticle'),
     path('reported/',
          ReportedArticleListAPIView.as_view(), name='reported'),
+    path('articles/<slug>/share/facebook/',
+         ShareArticleOnFacebookAPIView.as_view()),
+    path('articles/<slug>/share/twitter/',
+         ShareArticleOnTwitterAPIView.as_view()),
+    path('articles/<slug>/share/email/',
+         ShareArticleViaMailAPIView.as_view()),
+    path('articles/<str:slug>/rate/', RateArticle.as_view(), name='rate-article')
 ]

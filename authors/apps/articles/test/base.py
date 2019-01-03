@@ -12,8 +12,7 @@ from ..apps import ArticlesConfig
 from authors.apps.profiles.apps import ProfilesConfig
 from ..models import User
 from ...authentication.views import (VerifyAccount,
-                                     RegistrationAPIView
-                                     )
+                                     RegistrationAPIView)
 
 
 class BaseTestArticles(APITestCase):
@@ -45,6 +44,15 @@ class BaseTestArticles(APITestCase):
             }
         }
 
+        self.rate = {
+            "rating": 3
+        }
+        self.rate_wrong = {
+            "rating": 9
+        }
+        self.re_rate = {
+            "rating": 4
+        }
         self.article = {
 
             "article": {
@@ -128,7 +136,18 @@ class BaseTestArticles(APITestCase):
                 }],
             }
         }
+        self.article_log_tile = {
 
+            "article": {
+                "title": "How to  train your dragon"*200,
+                "description": "Ever wonder how?",
+                "body": "You have to believe",
+                "images": {
+                        "image_url": "http//url",
+                        "image_description": "image is cool"
+                }
+            }
+        }
         url = reverse('registration')
         self.client.post(url, self.data, format='json')
 
@@ -174,3 +193,13 @@ class BaseTestArticles(APITestCase):
         response = self.client.post(
             '/api/articles/', data=self.article, format='json')
         return response.data['slug']
+
+    def create_article_to_share(self):
+        """
+        create & return an article that will be used for sharing
+        """
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer {}'.format(self.get_samantha_token()))
+        response = self.client.post(
+            '/api/articles/', data=self.article, format='json')
+        return response.data

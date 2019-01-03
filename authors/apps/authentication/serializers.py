@@ -268,12 +268,13 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
                 'Invalid token please try again'
             )
 
-        if 'sub' not in decoded_google_user_data:  
+        if 'sub' not in decoded_google_user_data:
             raise serializers.ValidationError(
                 'Token is not valid or has expired. Please get a new one.'
             )
 
-        user = User.objects.filter(social_id=decoded_google_user_data.get('sub'))
+        user = User.objects.filter(
+            social_id=decoded_google_user_data.get('sub'))
         if not user.exists():
             user_obj = {
                 'social_id': decoded_google_user_data.get('sub'),
@@ -317,7 +318,7 @@ class FacebookAuthSerializer(serializers.ModelSerializer):
                 'Invalid token please try again'
             )
 
-        if 'id' not in facebook_user_data:  
+        if 'id' not in facebook_user_data:
             raise serializers.ValidationError(
                 'Token is not valid or has expired. Please get a new one.'
             )
@@ -362,7 +363,7 @@ class TwitterAuthSerializer(serializers.ModelSerializer):
                 'Invalid token please try again'
             )
 
-        if 'id_str' not in twitter_user_data:  
+        if 'id_str' not in twitter_user_data:
             raise serializers.ValidationError(
                 'Token is not valid or has expired. Please get a new one.'
             )
@@ -372,7 +373,7 @@ class TwitterAuthSerializer(serializers.ModelSerializer):
             user_obj = {
                 'social_id': twitter_user_data.get('id_str'),
                 'username': twitter_user_data.get('name'),
-                'email': twitter_user_data.get('email'), 
+                'email': twitter_user_data.get('email'),
                 'password': 'Password@AAA'
             }
 
@@ -385,4 +386,3 @@ class TwitterAuthSerializer(serializers.ModelSerializer):
         authenticated_user = User.objects.get(
             social_id=twitter_user_data.get('id_str'))
         return authenticated_user.token()
-
