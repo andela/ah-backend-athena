@@ -52,7 +52,7 @@ class TestArticles(BaseTestArticles):
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
         response = self.client.get(
-            '/api/articles/'+slug+'/',  format='json')
+            '/api/articles/'+slug+'',  format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get_article_doesnot_exist(self):
@@ -60,7 +60,7 @@ class TestArticles(BaseTestArticles):
             HTTP_AUTHORIZATION='Bearer ' + self.login_user())
         fake_slug = "ed"*23
         response = self.client.get(
-            '/api/articles/{}/'.format(fake_slug),  format='json')
+            '/api/articles/{}'.format(fake_slug),  format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_article(self):
