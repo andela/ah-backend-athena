@@ -17,3 +17,4 @@ class StandardResultsPagination(PageNumberPagination):
             'current_page': self.page.number,
             'results': data
         })
+

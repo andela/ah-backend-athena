@@ -55,6 +55,7 @@ class RegistrationAPIView(GenericAPIView):
         serializer.save()
         address = serializer.data['email']
         user = User.objects.filter(email=user['email']).first()
+        
 
         RegistrationAPIView.generate_activation_link(user, request)
         return Response({"message": "A verification email has been sent to {}".format(
