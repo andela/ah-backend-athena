@@ -62,7 +62,7 @@
     "heroku-postgresql"
   ],
   "scripts": {
-    "postdeploy": "./manage makemigrations&&./manage.py migrate --noinput"
+    "postdeploy": "./manage.py makemigrations&&./manage.py migrate --noinput"
   },
   "buildpacks": [{
     "url": "heroku/python"
