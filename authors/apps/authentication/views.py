@@ -36,6 +36,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from datetime import timedelta
 from django.core.signing import TimestampSigner
+from django.shortcuts import redirect
+import os
 
 
 class RegistrationAPIView(GenericAPIView):
@@ -268,6 +270,9 @@ class VerifyAccount(GenericAPIView):
         by checking the token against the bearer username and also the encoded byte string
 
         """
+        front_end_domain = os.getenv(
+            "FRONT_END_DOMAIN", "http://localhost:3000/")
+
         username = force_text(urlsafe_base64_decode(uidb64))
 
         user = User.objects.filter(username=username).first()
@@ -279,8 +284,10 @@ class VerifyAccount(GenericAPIView):
         if not validate_token:
             data['message'] = "Your activation link is Invalid or has expired."
             stat = status.HTTP_400_BAD_REQUEST
+            return redirect(front_end_domain+"invalid_link")
+
         else:
             user.is_verified = True
             user.save()
 
-        return Response(data, status=stat)
+        return redirect(front_end_domain+"login")
