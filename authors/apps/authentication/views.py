@@ -36,6 +36,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from datetime import timedelta
 from django.core.signing import TimestampSigner
+from django.shortcuts import redirect
+import os
 
 
 class RegistrationAPIView(GenericAPIView):
@@ -220,8 +222,17 @@ class PasswordResetConfirmView(RetrieveUpdateAPIView):
     permission_classes = (AllowAny,)
     serializer_class = PasswordResetConfirmSerializer
 
-    def get_object(self):
-        return {"password": "", "confirm_password": ""}
+    def get(self, request, **kwargs):
+        front_end_domain = os.getenv(
+            "FRONT_END_DOMAIN", "http://localhost:3000/")
+
+        slug = kwargs['slug'].split('-')[2]
+        try:
+            username = PasswordResetView().decode_id(slug)
+            User.objects.get(username=username)
+        except:
+            return redirect(front_end_domain+"invalid_link")
+        return redirect(front_end_domain+"password_reset_confirm/"+kwargs['slug'])
 
     def update(self, request, **kwargs):
         serializer_data = request.data
