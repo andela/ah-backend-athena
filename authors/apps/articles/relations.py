@@ -17,3 +17,4 @@ class TagField(RelatedField):
 
     def to_representation(self, value):
         return value.tag
+

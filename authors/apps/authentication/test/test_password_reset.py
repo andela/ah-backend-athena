@@ -110,11 +110,7 @@ class TestPasswordReset(APITestCase):
             self.password,
             format='json'
         )
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            json.loads(res.content),
-            {"password": "", "confirm_password": ""}
-        )
+        self.assertEqual(res.status_code, status.HTTP_302_FOUND)
 
     def test_new_short_password(self):
         self.short_password = {
