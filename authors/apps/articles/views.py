@@ -146,32 +146,6 @@ class CreateArticleView(GenericAPIView):
         res['images'] = images_list
         return Response(res, status=status.HTTP_201_CREATED)
 
-    def get(self, request, slug):
-        serializer_class = UpdateRetrieveArticleViewSerializer
-
-        """
-         This class method is used retrieve article by id
-        """
-        article = Article.objects.filter(
-            slug=slug
-        ).first()
-        if not article:
-            error = {"error": "This article doesnot exist"}
-            return Response(error, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = self.serializer_class(article)
-
-        image_list = ArticleImg.objects.all().filter(
-            article_id=article.id).values()
-        res = serializer.data
-        images_list = []
-        for image in list(image_list):
-            image.pop('article_id')
-            images_list.append(image)
-        res['images'] = images_list
-
-        return Response(res, status=status.HTTP_200_OK)
-
     def delete(self, request, slug):
         serializer_class = UpdateRetrieveArticleViewSerializer
 
@@ -248,10 +222,36 @@ class CreateArticleView(GenericAPIView):
 
         return Response(res, status=status.HTTP_201_CREATED)
 
+class GetOneArticle(GenericAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = CreateArticleViewSerializer
+    def get(self, request, slug):
+
+        """
+         This class method is used retrieve article by id
+        """
+        article = Article.objects.filter(
+            slug=slug
+        ).first()
+        if not article:
+            error = {"error": "This article doesnot exist"}
+            return Response(error, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.serializer_class(article)
+
+        image_list = ArticleImg.objects.all().filter(
+            article_id=article.id).values()
+        res = serializer.data
+        images_list = []
+        for image in list(image_list):
+            image.pop('article_id')
+            images_list.append(image)
+        res['images'] = images_list
+
+        return Response(res, status=status.HTTP_200_OK)
 
 class RetrieveArticlesAPIView(GenericAPIView):
-    serializer_class = UpdateRetrieveArticleViewSerializer
-    permission_classes = (IsAuthenticated,)
+    serializer_class = CreateArticleViewSerializer
     renderer_classes = (ListArticlesJSONRenderer,)
     pagination_class = StandardResultsPagination
 
@@ -265,7 +265,7 @@ class RetrieveArticlesAPIView(GenericAPIView):
         for article in list(paginated_data):
             images = ArticleImg.objects.filter(
                 article_id=article.id).values()
-            article = UpdateRetrieveArticleViewSerializer(article).data
+            article = CreateArticleViewSerializer(article).data
             images_list = []
             for image in list(images):
                 image.pop('article_id')
@@ -862,6 +862,7 @@ class RateArticle(GenericAPIView):
             avg.update_avg_articles_table(rated["article"], a["avg_rating"])
         
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 class ArticlesFilter(filters.FilterSet):
     tag = filters.CharFilter(field_name='tags__tag', lookup_expr='exact')
     author = filters.CharFilter(field_name='author__user__username', lookup_expr='exact')

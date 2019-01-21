@@ -49,10 +49,7 @@ class VerificationTestCase(APITestCase):
         token, uidb64 = RegistrationAPIView.generate_activation_link(
             user, req, send=False)
         response = self.verify_account(token, uidb64)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        user = User.objects.get()
-        self.assertTrue(user.is_verified)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
 
     def test_generate_activation_link_function(self):
         user = User.objects.get()
@@ -95,7 +92,4 @@ class VerificationTestCase(APITestCase):
             "invalid_username")).decode("utf-8")
 
         response = self.verify_account(token, uid)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        user = User.objects.get()
-        # Ensure the user is not verified
-        self.assertFalse(user.is_verified)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)

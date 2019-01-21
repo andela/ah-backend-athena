@@ -97,4 +97,5 @@ db.sqlite3
 .vscode/
 .DS_Store/
 *.swp
+authors/apps/.DS_Store
 # migrations/
