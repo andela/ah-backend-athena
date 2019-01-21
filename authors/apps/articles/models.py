@@ -54,6 +54,7 @@ class Article(models.Model):
     this field shows how many likes an article has
     """
     likes_count = models.IntegerField(default=0)
+    like = models.TextField(default='')
     read_time = models.IntegerField(default=0)
     view_count = models.IntegerField(default=0)
     read_count = models.IntegerField(default=0)

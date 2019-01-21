@@ -237,6 +237,27 @@ class GetOneArticle(GenericAPIView):
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
 
+        
+        try:
+            user_id = JWTAuthentication().authenticate(request)[0].id
+            profile = Profile.objects.get(user__id=user_id)
+
+
+            user_like_options = Likes.objects.filter(
+                profile=profile).filter(article__slug=slug)
+
+            if len(user_like_options) >= 1:
+                user_like_option = user_like_options.first()
+                if not user_like_option.like:
+                    article.like = "false"
+                if user_like_option.like:
+                    article.like = "true"
+            else:
+                article.like = ""
+        except :
+            article.like = ""
+
+
         serializer = self.serializer_class(article)
 
         image_list = ArticleImg.objects.all().filter(
@@ -430,12 +451,14 @@ class LikeArticleView(GenericAPIView):
             user_like_option = user_like_options.first()
             if not user_like_option.like:
                 current_article.likes_count = current_article.likes_count + 1
-                current_article.save()
+            current_article.like = 'true'
+            current_article.save()
             user_like_option.like = True
             user_like_option.save()
             return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
         else:
             current_article.likes_count = current_article.likes_count + 1
+            current_article.like = 'true'
             current_article.save()
             serializer = LikeArticleViewSerializer(data={"like": True})
             serializer.is_valid(raise_exception=True)
@@ -463,12 +486,14 @@ class LikeArticleView(GenericAPIView):
             user_like_option = user_like_options.first()
             if user_like_option.like and current_article.likes_count > 0:
                 current_article.likes_count = current_article.likes_count - 1
-                current_article.save()
+            current_article.like = 'false'
+            current_article.save()
             user_like_option.like = False
             user_like_option.save()
             return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
         else:
             current_article.likes_count = current_article.likes_count - 1
+            current_article.like = 'false'
             current_article.save()
             serializer = LikeArticleViewSerializer(data={"like": False})
             serializer.is_valid(raise_exception=True)
@@ -842,7 +867,8 @@ class RateArticle(GenericAPIView):
         }
         score = [1,2,3,4,5]
         if rated["rating"] not in score:
-            return Response({"error":"Please input a value between 1 to 5"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"Please input a value between 1 to 5"}, 
+            status=status.HTTP_400_BAD_REQUEST)
 
         user_exists = avg.check_if_user_exists(rated["user_id"], rated["article"])
         
