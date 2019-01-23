@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 ROOT_URLCONF = 'authors.urls'
@@ -137,10 +138,11 @@ STATICFILES_DIRS = (
 CORS_ORIGIN_WHITELIST = (
     '0.0.0.0:4000',
     '0.0.0.0:8000',
-    'localhost:4000',
-    'localhost:8000',
-    'localhost:3001'
+    'localhost:3001',
+    'localhost:3000',
+
 )
+CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ORIGIN_ALLOW_ALL = True
 

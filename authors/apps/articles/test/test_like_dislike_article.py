@@ -78,6 +78,35 @@ class TestLike(APITestCase):
             response.data['like'],
             True
         )
+    def test_return_positive_like_status_of_an_article(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        slug = self.create_testing_article()
+        url = '/api/articles/'+slug+'/like/'
+        response = self.client.post(str(url), format='json')
+        response = self.client.post(str(url), format='json')
+        url2 = '/api/articles/'+slug
+        response2 = self.client.get(str(url2), format='json')
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data['like'],
+            True
+        )
+
+    def test_return_negative_like_status_of_an_article(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + self.create_testing_user())
+        slug = self.create_testing_article()
+        url = '/api/articles/'+slug+'/like/'
+        response = self.client.post(str(url), format='json')
+        response = self.client.delete(str(url), format='json')
+        url2 = '/api/articles/'+slug
+        response2 = self.client.get(str(url2), format='json')
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data['like'],
+            False
+        )
 
     def test_like_then_dislike_existing_article(self):
         self.client.credentials(
