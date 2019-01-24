@@ -76,7 +76,8 @@ from .serializers import(
     FacebookShareSeriaizer,
     TwitterShareSeriaizer,
     EmailShareSeriaizer,
-    RatingSerializer
+    RatingSerializer,
+    TagsAllSerializer
 )
 from .utils import Averages
 avg = Averages()
@@ -903,4 +904,14 @@ class SearchArticlesAPIView(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, SearchFilter)
     filterset_class = ArticlesFilter
     search_fields = ('tags__tag', 'author__user__username', 'title', 'body', 'description')
+
+class TagsAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = TagsAllSerializer
+
+    def get(self, request, **kwargs):
+        tags = Tag.objects.all()
+        serializer = self.serializer_class(tags, many=True)
+        print(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
    
