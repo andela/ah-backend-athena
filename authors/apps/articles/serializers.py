@@ -41,7 +41,7 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'body', 'description', 'tagList',
                   'author', 'slug', 'published', 'created_at', 'updated_at',
                   'favourited', 'favouriteCount', 'likes_count', 'like',
-                  'facebook_shares', 'twitter_shares', 'email_shares',
+                  'facebook_shares', 'twitter_shares', 'email_shares', 'avg_rating',
                   'read_time', 'view_count', 'read_count']
 
     def create(self, validated_data):
