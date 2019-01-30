@@ -897,7 +897,7 @@ class ArticlesFilter(filters.FilterSet):
 
 class SearchArticlesAPIView(generics.ListAPIView):
     permission_classes = (AllowAny,)
-    serializer_class = UpdateRetrieveArticleViewSerializer
+    serializer_class = CreateArticleViewSerializer
     queryset = Article.objects.all()
     pagination_class = StandardResultsPagination
 
