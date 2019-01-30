@@ -504,7 +504,7 @@ class LikeArticleView(GenericAPIView):
 
 class ReadingView(GenericAPIView):
     """ class view to enable viewing readers statistics """
-    serializer_class = ReadingSerializer
+    permission_class = (AllowAny,)
 
     def do_math(self, article, count):
         """
@@ -530,21 +530,13 @@ class ReadingView(GenericAPIView):
          This class method updates the view counts on an article
         """
         article = Article.objects.filter(slug=slug).first()
-        reader = Readings.objects.filter(
-            author=request.user.id).filter(article=article)
         if not self.do_math(article, count):
-            return Response({"message": "read not recorded"}, status=status.HTTP_301_MOVED_PERMANENTLY)
-        if len(reader) < 1:
-            article.read_count += 1
-            article.save()
-            author = User.objects.get(id=request.user.id)
-            read_obj = Readings(author=author, article=article)
-            read_obj.save()
-            serializer = self.serializer_class(read_obj)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            article.view_count +=1
         else:
-            serializer = self.serializer_class(reader.first())
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            article.view_count +=1
+            article.read_count += 1
+        article.save()
+        return Response({"result":"done"}, status=status.HTTP_200_OK)
 
 
 class BookmarkView(GenericAPIView):
