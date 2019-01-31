@@ -76,6 +76,29 @@ class BaseTestArticles(APITestCase):
                 ]
             }
         }
+        self.article2 = {
+
+            "article": {
+                "title": "How to  train your dragon added on the titlt",
+                "description": "Ever wonder how?",
+                "body": "You have to believe this body has beeb updated "*100,
+                "tagList": ["Rails", "Golang", "magic!"],
+                "images": [
+                       {
+                           "image_url": "https://imgur.comhenry/",
+                           "description": "image is cool"
+                       },
+                    {
+                           "image_url": "https://imgur.comhenry/",
+                           "description": "image is cool"
+                       },
+                    {
+                           "image_url": "https://imgur.comhenry/",
+                           "description": "image is cool"
+                       }
+                ]
+            }
+        }
 
         self.comment = {
             "comment": {

@@ -15,6 +15,8 @@ from .models import(
     ReportArticle,
     Ratings
 )
+
+
 class ArticleImgSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -38,8 +40,8 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         """
         fields = ['id', 'title', 'body', 'description', 'tagList',
                   'author', 'slug', 'published', 'created_at', 'updated_at',
-                  'favourited', 'favouriteCount', 'likes_count',
-                  'facebook_shares', 'twitter_shares', 'email_shares',
+                  'favourited', 'favouriteCount', 'likes_count', 'like',
+                  'facebook_shares', 'twitter_shares', 'email_shares', 'avg_rating',
                   'read_time', 'view_count', 'read_count']
 
     def create(self, validated_data):
@@ -58,7 +60,7 @@ class CreateArticleViewSerializer(serializers.ModelSerializer):
         instance.tags.clear()
         for tag in tags:
             instance.tags.add(tag)
-            
+
         for (key, value) in validated_data.items():
             setattr(instance, key, value)
 
@@ -80,13 +82,14 @@ class ArticleImgSerializer(serializers.ModelSerializer):
 class UpdateRetrieveArticleViewSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True)
     tagList = TagField(many=True, required=False, source='tags')
+
     class Meta:
         model = Article
         """
         List all of the fields that could possibly be included in a request
         or response, this includes fields specified explicitly above.
         """
-        fields = ['id','title', 'body', 'description', 'tagList',
+        fields = ['id', 'title', 'body', 'description', 'tagList',
                   'author', 'slug', 'published', 'created_at', 'updated_at', ]
 
 
@@ -110,6 +113,7 @@ class FavouriteSerializer(serializers.ModelSerializer):
         fields = [
             'article', 'favourite', 'profile'
         ]
+
 
 class LikeArticleViewSerializer(serializers.ModelSerializer):
     article = CreateArticleViewSerializer(read_only=True)
@@ -160,6 +164,7 @@ class ReportArticleSerializer(serializers.ModelSerializer):
         fields = ['article_id', 'article_slug',
                   'reported_by', 'reason', 'reported_at', ]
 
+
 class FacebookShareSeriaizer(serializers.ModelSerializer):
     """
     This class increments number of shares for an article via the facebook platform
@@ -176,10 +181,18 @@ class EmailShareSeriaizer(serializers.ModelSerializer):
     """
     This class increments number of shares for an article via the facebook platform
     """
-    
+
+
 class RatingSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(read_only=False)
-    
+
     class Meta:
         model = Ratings
-        fields = ['article','user_id','rating']
+        fields = ['article', 'user_id', 'rating']
+
+
+class TagsAllSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = ['id', 'tag', 'slug']

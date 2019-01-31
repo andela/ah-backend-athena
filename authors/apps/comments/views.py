@@ -28,7 +28,7 @@ class CommentView(GenericAPIView):
         try:
             slug = self.kwargs['slug']
             article = Article.objects.get(slug=slug)
-            
+
             author = request.user
             comment['author'] = author.id
             comment['article'] = article.id
@@ -38,23 +38,43 @@ class CommentView(GenericAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Article.DoesNotExist:
             return Response(
-                   {
-                    "error":{ 
-                    "body": [
-                        "Sorry, this article does not exist"
-                    ]}},
-                    status=status.HTTP_404_NOT_FOUND
+                {
+                    "error": {
+                        "body": [
+                            "Sorry, this article does not exist"
+                        ]}},
+                status=status.HTTP_404_NOT_FOUND
             )
 
-    def get(self, request,slug):
+    def get(self, request, slug):
         try:
             article = Article.objects.get(slug=slug)
             article_id = article.id
             comment = Comments.objects.all().filter(article_id=article_id)
             serializer = self.serializer_class(comment, many=True)
-            return Response({'comments': serializer.data}, status.HTTP_200_OK)
+            new_data = serializer.data
+            comments_list = []
+            user_id = JWTAuthentication().authenticate(request)[0].id
+            profile = Profile.objects.get(user__id=user_id)
+            for comm in new_data:
+                comments_list.append(comm)
+
+                liked_comments = ComentLikes.objects.filter(
+                    id=comm['id']).filter(profile=profile)
+                if len(liked_comments) >= 1:
+                    user_like_option = liked_comments.first()
+                    if user_like_option.like:
+
+                        comm['is_like'] = True
+                    else:
+                        comm['is_like'] = False
+                else:
+                    print(comm['id'])
+                    comm['is_like'] = ""
+            return Response({'comments': comments_list}, status.HTTP_200_OK)
         except Article.DoesNotExist:
-             raise CommentDoesNotExist
+            raise CommentDoesNotExist
+
 
 class CommentDetailView(GenericAPIView):
     """ View class to handle child comments """
@@ -64,8 +84,26 @@ class CommentDetailView(GenericAPIView):
     def get(self, request, slug, id):
         comment = Comments.objects.all().filter(id=id)
         serializer = self.serializer_class(comment, many=True)
-        new_data = serializer.data 
-        return Response({"comment": new_data}, status.HTTP_200_OK)
+        new_data = serializer.data
+        comments_list = []
+        user_id = JWTAuthentication().authenticate(request)[0].id
+        profile = Profile.objects.get(user__id=user_id)
+        for comm in new_data:
+            comments_list.append(comm)
+
+            liked_comments = ComentLikes.objects.filter(
+                id=comm['id']).filter(profile=profile)
+            if len(liked_comments) >= 1:
+                user_like_option = liked_comments.first()
+                if user_like_option.like:
+
+                    comm['is_like'] = True
+                else:
+                    comm['is_like'] = False
+            else:
+                print(comm['id'])
+                comm['is_like'] = ""
+        return Response({'comments': comments_list}, status.HTTP_200_OK)
 
     def post(self, request, slug, id):
         comment = request.data.get('reply')
@@ -95,15 +133,15 @@ class CommentDetailView(GenericAPIView):
                 serializer.save()
                 return Response(serializer.data)
             else:
-                raise PermisionDenied       
+                raise PermisionDenied
         except Comments.DoesNotExist:
             return Response(
                 {
-                    "error":{ 
-                    "body":[
-                        "Failed to update, comment or article doesnot exist"
-                    ]}},
-                    status=status.HTTP_400_BAD_REQUEST
+                    "error": {
+                        "body": [
+                            "Failed to update, comment or article doesnot exist"
+                        ]}},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
     def delete(self, request, **kwargs):
@@ -113,13 +151,14 @@ class CommentDetailView(GenericAPIView):
             if request.user == comment_obj.author:
                 comment_obj.delete()
                 return Response({
-                    "message":{ 
-                    "body":["Comment deleted successfully"]}},
+                    "message": {
+                        "body": ["Comment deleted successfully"]}},
                     status=status.HTTP_200_OK)
             else:
                 raise PermisionDenied
         except Comments.DoesNotExist:
             raise CommentDoesNotExist
+
 
 class LikeCommentsView(GenericAPIView):
     """ View class to handle liking of comments """
@@ -132,17 +171,18 @@ class LikeCommentsView(GenericAPIView):
         if comment is None:
             return Response(
                 {
-                    "error":{ 
-                    "body":[
-                        "Comment or article doesnot exist"
-                    ]}},
-                    status=status.HTTP_404_NOT_FOUND
+                    "error": {
+                        "body": [
+                            "Comment or article doesnot exist"
+                        ]}},
+                status=status.HTTP_404_NOT_FOUND
             )
-        
+
         user_id = JWTAuthentication().authenticate(request)[0].id
         profile = Profile.objects.get(user__id=user_id)
-    
-        liked_comments = ComentLikes.objects.filter(comment=comment).filter(profile=profile)
+
+        liked_comments = ComentLikes.objects.filter(
+            comment=comment).filter(profile=profile)
         if len(liked_comments) >= 1:
             user_like_option = liked_comments.first()
             if not user_like_option.like:
@@ -151,17 +191,16 @@ class LikeCommentsView(GenericAPIView):
             user_like_option.like = True
             user_like_option.save()
             serializer = self.serializer_class(comment, many=False)
-            new_data = serializer.data 
+            new_data = serializer.data
         else:
             comment.likes_count = comment.likes_count + 1
             comment.save()
-            lik = ComentLikes(comment=comment,profile=profile,like=True)
+            lik = ComentLikes(comment=comment, profile=profile, like=True)
             lik.save()
             serializer = self.serializer_class(comment, many=False)
-            new_data = serializer.data 
-            
+            new_data = serializer.data
+
         return Response({"comment": new_data}, status.HTTP_200_OK)
-        
 
     def delete(self, request, slug, id):
         comment_qs = Comments.objects.all().filter(id=id).filter(article__slug=slug)
@@ -169,34 +208,33 @@ class LikeCommentsView(GenericAPIView):
         if comment is None:
             return Response(
                 {
-                    "error":{ 
-                    "body":[
-                        "Comment or article doesnot exist"
-                    ]}},
-                    status=status.HTTP_404_NOT_FOUND
+                    "error": {
+                        "body": [
+                            "Comment or article doesnot exist"
+                        ]}},
+                status=status.HTTP_404_NOT_FOUND
             )
         user_id = JWTAuthentication().authenticate(request)[0].id
         profile = Profile.objects.get(user__id=user_id)
 
-        liked_comments = ComentLikes.objects.filter(comment=comment).filter(profile=profile)
-        
+        liked_comments = ComentLikes.objects.filter(
+            comment=comment).filter(profile=profile)
+
         if len(liked_comments) >= 1:
             user_like_option = liked_comments.first()
-            if  user_like_option.like:
+            if user_like_option.like:
                 comment.likes_count = comment.likes_count - 1
                 comment.save()
             user_like_option.like = False
             user_like_option.save()
             serializer = self.serializer_class(comment, many=False)
-            new_data = serializer.data 
+            new_data = serializer.data
         else:
             comment.likes_count = comment.likes_count - 1
             comment.save()
-            lik = ComentLikes(comment=comment,profile=profile,like=False)
+            lik = ComentLikes(comment=comment, profile=profile, like=False)
             lik.save()
             serializer = self.serializer_class(comment, many=False)
-            new_data = serializer.data 
-            
-        return Response({"comment": new_data}, status.HTTP_200_OK)
+            new_data = serializer.data
 
-    
+        return Response({"comment": new_data}, status.HTTP_200_OK)

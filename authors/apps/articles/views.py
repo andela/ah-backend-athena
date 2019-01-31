@@ -76,7 +76,8 @@ from .serializers import(
     FacebookShareSeriaizer,
     TwitterShareSeriaizer,
     EmailShareSeriaizer,
-    RatingSerializer
+    RatingSerializer,
+    TagsAllSerializer
 )
 from .utils import Averages
 avg = Averages()
@@ -236,6 +237,27 @@ class GetOneArticle(GenericAPIView):
         if not article:
             error = {"error": "This article doesnot exist"}
             return Response(error, status=status.HTTP_404_NOT_FOUND)
+
+        
+        try:
+            user_id = JWTAuthentication().authenticate(request)[0].id
+            profile = Profile.objects.get(user__id=user_id)
+
+
+            user_like_options = Likes.objects.filter(
+                profile=profile).filter(article__slug=slug)
+
+            if len(user_like_options) >= 1:
+                user_like_option = user_like_options.first()
+                if not user_like_option.like:
+                    article.like = "false"
+                if user_like_option.like:
+                    article.like = "true"
+            else:
+                article.like = ""
+        except :
+            article.like = ""
+
 
         serializer = self.serializer_class(article)
 
@@ -430,12 +452,14 @@ class LikeArticleView(GenericAPIView):
             user_like_option = user_like_options.first()
             if not user_like_option.like:
                 current_article.likes_count = current_article.likes_count + 1
-                current_article.save()
+            current_article.like = 'true'
+            current_article.save()
             user_like_option.like = True
             user_like_option.save()
             return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
         else:
             current_article.likes_count = current_article.likes_count + 1
+            current_article.like = 'true'
             current_article.save()
             serializer = LikeArticleViewSerializer(data={"like": True})
             serializer.is_valid(raise_exception=True)
@@ -463,12 +487,14 @@ class LikeArticleView(GenericAPIView):
             user_like_option = user_like_options.first()
             if user_like_option.like and current_article.likes_count > 0:
                 current_article.likes_count = current_article.likes_count - 1
-                current_article.save()
+            current_article.like = 'false'
+            current_article.save()
             user_like_option.like = False
             user_like_option.save()
             return Response(LikeArticleViewSerializer(user_like_option).data, status=status.HTTP_201_CREATED)
         else:
             current_article.likes_count = current_article.likes_count - 1
+            current_article.like = 'false'
             current_article.save()
             serializer = LikeArticleViewSerializer(data={"like": False})
             serializer.is_valid(raise_exception=True)
@@ -479,7 +505,7 @@ class LikeArticleView(GenericAPIView):
 
 class ReadingView(GenericAPIView):
     """ class view to enable viewing readers statistics """
-    serializer_class = ReadingSerializer
+    permission_class = (AllowAny,)
 
     def do_math(self, article, count):
         """
@@ -505,21 +531,13 @@ class ReadingView(GenericAPIView):
          This class method updates the view counts on an article
         """
         article = Article.objects.filter(slug=slug).first()
-        reader = Readings.objects.filter(
-            author=request.user.id).filter(article=article)
         if not self.do_math(article, count):
-            return Response({"message": "read not recorded"}, status=status.HTTP_301_MOVED_PERMANENTLY)
-        if len(reader) < 1:
-            article.read_count += 1
-            article.save()
-            author = User.objects.get(id=request.user.id)
-            read_obj = Readings(author=author, article=article)
-            read_obj.save()
-            serializer = self.serializer_class(read_obj)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            article.view_count +=1
         else:
-            serializer = self.serializer_class(reader.first())
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            article.view_count +=1
+            article.read_count += 1
+        article.save()
+        return Response({"result":"done"}, status=status.HTTP_200_OK)
 
 
 class BookmarkView(GenericAPIView):
@@ -842,7 +860,8 @@ class RateArticle(GenericAPIView):
         }
         score = [1,2,3,4,5]
         if rated["rating"] not in score:
-            return Response({"error":"Please input a value between 1 to 5"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"Please input a value between 1 to 5"}, 
+            status=status.HTTP_400_BAD_REQUEST)
 
         user_exists = avg.check_if_user_exists(rated["user_id"], rated["article"])
         
@@ -870,11 +889,21 @@ class ArticlesFilter(filters.FilterSet):
 
 class SearchArticlesAPIView(generics.ListAPIView):
     permission_classes = (AllowAny,)
-    serializer_class = UpdateRetrieveArticleViewSerializer
+    serializer_class = CreateArticleViewSerializer
     queryset = Article.objects.all()
     pagination_class = StandardResultsPagination
 
     filter_backends = (DjangoFilterBackend, SearchFilter)
     filterset_class = ArticlesFilter
     search_fields = ('tags__tag', 'author__user__username', 'title', 'body', 'description')
+
+class TagsAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = TagsAllSerializer
+
+    def get(self, request, **kwargs):
+        tags = Tag.objects.all()
+        serializer = self.serializer_class(tags, many=True)
+        print(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
    
